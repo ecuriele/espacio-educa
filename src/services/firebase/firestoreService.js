@@ -409,38 +409,27 @@ export async function crearEntrega({ estudianteId, estudianteNombre, leccionId, 
   const entregaId = `${estudianteId}_${leccionId}_${popcodeIndex}`;
   const ref = doc(db, 'entregas', entregaId);
 
-  const snap = await getDoc(ref);
-  if (snap.exists()) {
-    await updateDoc(ref, {
-      htmlCode,
-      cssCode,
-      jsCode,
-      revisado: false,
-      calificacion: null,
-      comentarioProfesor: '',
-      actualizadoEn: serverTimestamp(),
-      ediciones: firestoreIncrement(1)
-    });
-  } else {
-    await setDoc(ref, {
-      estudianteId,
-      estudianteNombre,
-      leccionId,
-      leccionTitulo,
-      moduloId,
-      popcodeIndex,
-      popcodeTitulo,
-      htmlCode,
-      cssCode,
-      jsCode,
-      revisado: false,
-      calificacion: null,
-      comentarioProfesor: '',
-      entregadoEn: serverTimestamp(),
-      ediciones: 0,
-      tipo: 'popcode'
-    }, { merge: false });
-  }
+  // Usamos setDoc con merge: true para que funcione 100% offline sin necesidad
+  // de intentar leer el documento primero (getDoc falla si no hay red y no está en caché).
+  await setDoc(ref, {
+    estudianteId,
+    estudianteNombre,
+    leccionId,
+    leccionTitulo,
+    moduloId,
+    popcodeIndex,
+    popcodeTitulo,
+    htmlCode,
+    cssCode,
+    jsCode,
+    revisado: false,
+    calificacion: null,
+    comentarioProfesor: '',
+    actualizadoEn: serverTimestamp(),
+    entregadoEn: serverTimestamp(),
+    tipo: 'popcode',
+    ediciones: firestoreIncrement(1)
+  }, { merge: true });
   
   return entregaId;
 }
