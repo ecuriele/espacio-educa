@@ -1,0 +1,49 @@
+rules_version = '2';
+// ─────────────────────────────────────────────────────────────────────────────
+// storage.rules — Reglas de seguridad de Firebase Storage para Espacio Educa
+//
+// Estructura de carpetas en Storage:
+//   course-files/{courseId}/pdf/       → PDFs de lecciones
+//   course-files/{courseId}/video/     → Videos de apoyo (MP4)
+//   course-files/{courseId}/presentation/ → Presentaciones
+//   avatars/{userId}                   → Fotos de perfil
+// ─────────────────────────────────────────────────────────────────────────────
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ─── Archivos del curso ──────────────────────────────────────────────────
+    // Lectura: cualquier usuario autenticado (estudiantes y profesores)
+    // Escritura: solo profesores (verificado contra Firestore)
+    match /course-files/{courseId}/{type}/{fileName} {
+      allow read: if request.auth != null;
+
+      allow write: if request.auth != null
+        && firestore.get(
+             /databases/(default)/documents/perfiles_usuarios/$(request.auth.uid)
+           ).data.rol == 'profesor'
+        // Validación de tamaño: máximo 500 MB para videos, 50 MB para el resto
+        && (
+             (type == 'video' && request.resource.size < 500 * 1024 * 1024) ||
+             (type != 'video' && request.resource.size < 50 * 1024 * 1024)
+           )
+        // Solo tipos MIME permitidos
+        && request.resource.contentType.matches('video/.*|application/pdf|image/.*|application/vnd\\..*');
+
+      allow delete: if request.auth != null
+        && firestore.get(
+             /databases/(default)/documents/perfiles_usuarios/$(request.auth.uid)
+           ).data.rol == 'profesor';
+    }
+
+    // ─── Avatares de usuario ─────────────────────────────────────────────────
+    // Cada usuario puede subir/actualizar solo su propio avatar
+    match /avatars/{userId} {
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.size < 5 * 1024 * 1024  // máx. 5 MB
+        && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

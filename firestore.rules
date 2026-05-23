@@ -1,0 +1,98 @@
+rules_version = '2';
+// ─────────────────────────────────────────────────────────────────────────────
+// firestore.rules — Reglas de seguridad de Firestore para Espacio Educa
+//
+// Principio: Mínimo privilegio.
+// - Estudiantes: leen contenido del curso, escriben su propio progreso.
+// - Profesores:  todo lo anterior + CRUD de cursos/lecciones y lectura de entregas.
+// - Sin autenticación: sin acceso a ningún dato.
+// ─────────────────────────────────────────────────────────────────────────────
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Función helper: verificar rol del usuario autenticado ───────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isTeacher() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/perfiles_usuarios/$(request.auth.uid)).data.rol == 'profesor';
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ─── Perfiles de usuario ─────────────────────────────────────────────────
+    // El usuario solo puede leer/escribir su propio perfil.
+    // El profesor puede leer todos los perfiles (para ver lista de estudiantes).
+    match /perfiles_usuarios/{userId} {
+      allow read:  if isOwner(userId) || isTeacher();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId); // El rol solo se cambia manualmente en la consola
+    }
+
+    // ─── Cursos / Pensum ──────────────────────────────────────────────────────────
+    // Todos los autenticados pueden leer cursos.
+    // Solo los profesores pueden crear, editar o eliminar.
+    match /modulos/{moduloId} {
+      allow read:   if isAuthenticated();
+      allow create: if isTeacher();
+      allow update: if isTeacher();
+      allow delete: if isTeacher();
+    }
+
+    match /lecciones/{leccionId} {
+      allow read:   if isAuthenticated();
+      allow create: if isTeacher();
+      allow update: if isTeacher();
+      allow delete: if isTeacher();
+    }
+
+    // ─── Entregas de Popcodes ────────────────────────────────────────────────
+    // Cualquier usuario autenticado puede crear/sobreescribir su propia entrega.
+    // El profesor puede leer todas y actualizar (calificación/comentario).
+    match /entregas/{entregaId} {
+      // Crear o sobreescribir: el campo estudianteId debe coincidir con el uid del usuario
+      allow create, update: if isAuthenticated() &&
+                               request.resource.data.estudianteId == request.auth.uid;
+      // Leer: el propio estudiante o cualquier profesor
+      allow read: if isAuthenticated() &&
+                     (resource.data.estudianteId == request.auth.uid || isTeacher());
+      // El profesor puede actualizar para poner calificación/comentario y también eliminar para limpiar tests
+      allow update, delete: if isTeacher();
+    }
+
+    // ─── Entregas (colección legacy 'submissions') ───────────────────────────
+    match /submissions/{submissionId} {
+      allow create: if isAuthenticated() &&
+                       request.resource.data.studentId == request.auth.uid;
+      allow update: if isAuthenticated() &&
+                       resource.data.studentId == request.auth.uid;
+      allow read:   if isAuthenticated() &&
+                       (resource.data.studentId == request.auth.uid || isTeacher());
+    }
+
+    // ─── Progreso del estudiante ─────────────────────────────────────────────
+    // Cada estudiante lee/escribe su propio progreso.
+    // El profesor puede leer el progreso de todos (para estadísticas).
+    match /progress/{progressId} {
+      allow read:   if isAuthenticated() &&
+                       (resource.data.userId == request.auth.uid || isTeacher());
+      allow create: if isAuthenticated() &&
+                       request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() &&
+                       resource.data.userId == request.auth.uid;
+    }
+
+    // ─── Logros (achievements) ────────────────────────────────────────────────
+    match /achievements/{achievementId} {
+      allow read:   if isAuthenticated() &&
+                       (resource.data.userId == request.auth.uid || isTeacher());
+      allow write:  if isAuthenticated() &&
+                       request.resource.data.userId == request.auth.uid;
+    }
+  }
+}
