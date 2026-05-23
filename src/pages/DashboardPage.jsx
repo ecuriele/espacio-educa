@@ -38,9 +38,15 @@ export default function DashboardPage() {
       const filteredMods = published.filter(m => {
         if (user?.rol === 'profesor' || user?.rol === 'admin') return true;
         if (!user?.salon) return true;
-        const userLevel = user.salon.toLowerCase() === 'avanzado' ? 'avanzado' : 'basico';
-        const modLevel = (m.nivel || m.level || 'basico').toLowerCase();
-        return modLevel === userLevel;
+        
+        const salonStr = user.salon.toLowerCase();
+        const isUserAvanzado = salonStr.includes('avanzad');
+        
+        const isModAvanzado = m.nivel === 'avanzado' || m.level === 'advanced' || m.nivel === 'Avanzado';
+        const isModBasico = m.nivel === 'basico' || m.level === 'basic' || m.nivel === 'Básico';
+        
+        if (isUserAvanzado) return isModAvanzado;
+        return isModBasico || (!isModAvanzado && !isModBasico); // Por defecto asume básico si el usuario no es avanzado
       });
       setAllModules(filteredMods);
       const totales = {};
