@@ -132,7 +132,14 @@ export default function ModulesPage() {
             const total      = totalMap[modulo.id] ?? modulo.totalLecciones ?? 0;
             const completadas = progresoMap[modulo.id] ?? 0;
             const porcentaje  = total > 0 ? Math.round((completadas / total) * 100) : 0;
-            const isLocked    = levelKey === 'advanced' && idx > 0;
+            let isLocked = false;
+            if (!isTeacher && idx > 0) {
+              const prevModulo = listaModulos[idx - 1];
+              const prevTotal = totalMap[prevModulo.id] ?? prevModulo.totalLecciones ?? 0;
+              const prevCompletadas = progresoMap[prevModulo.id] ?? 0;
+              isLocked = prevTotal > 0 && prevCompletadas < prevTotal;
+            }
+            
             const completo    = porcentaje === 100 && total > 0;
 
             return (

@@ -149,8 +149,12 @@ export default function DashboardPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {(() => {
-            const inProgress = allModules.filter(m => (progresoMap[m.id] ?? 0) > 0);
-            const toShow = inProgress.length > 0 ? inProgress : allModules.slice(0, 3);
+            const notCompleted = allModules.filter(m => {
+              const total = totalMap[m.id] ?? m.totalLecciones ?? 0;
+              const completadas = progresoMap[m.id] ?? 0;
+              return total === 0 || completadas < total;
+            });
+            const toShow = notCompleted.slice(0, 3);
 
             if (isLoading) {
               return (
