@@ -35,9 +35,10 @@ export default function DashboardPage() {
     }
     getModulos().then(async (mods) => {
       const published = mods.filter(m => m.isPublished || m.publicado);
-      const userLevel = user?.salon?.toLowerCase() === 'avanzado' ? 'avanzado' : 'basico';
       const filteredMods = published.filter(m => {
         if (user?.rol === 'profesor' || user?.rol === 'admin') return true;
+        if (!user?.salon) return true;
+        const userLevel = user.salon.toLowerCase() === 'avanzado' ? 'avanzado' : 'basico';
         const modLevel = (m.nivel || m.level || 'basico').toLowerCase();
         return modLevel === userLevel;
       });
