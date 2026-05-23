@@ -170,28 +170,28 @@ export default function SandboxPage() {
           </h1>
           <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Experimenta libremente. Todo se guarda en tu dispositivo.</p>
         </div>
-        <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 w-full sm:w-auto mt-3 sm:mt-0">
+        <div className="flex flex-row flex-nowrap items-center gap-2 w-full sm:w-auto mt-3 sm:mt-0 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           <button
             id="sandbox-new-btn"
             onClick={handleNew}
-            className="col-span-1 sm:col-auto justify-center px-3 py-2 text-sm flex items-center gap-1.5 text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white bg-white dark:bg-surface-card hover:bg-slate-50 dark:hover:bg-surface-hover border border-slate-200 dark:border-surface-border rounded-xl transition-all shadow-sm dark:shadow-none"
+            className="flex-shrink-0 px-3 py-2 text-sm flex items-center gap-1.5 text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white bg-white dark:bg-surface-card hover:bg-slate-50 dark:hover:bg-surface-hover border border-slate-200 dark:border-surface-border rounded-xl transition-all shadow-sm dark:shadow-none whitespace-nowrap"
           >
-            <Plus size={16} /> Nuevo
+            <Plus size={16} className="shrink-0" /> Nuevo
           </button>
           <button
             onClick={handleExportToGithub}
             disabled={isExporting}
-            className="col-span-1 sm:col-auto justify-center px-4 py-2 flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-all shadow-sm disabled:opacity-50 whitespace-nowrap"
+            className="flex-shrink-0 px-3 py-2 flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-all shadow-sm disabled:opacity-50 whitespace-nowrap"
           >
-            <Github size={16} className="shrink-0" /> {isExporting ? 'Subir' : 'GitHub'}
+            <Github size={16} className="shrink-0" /> {isExporting ? 'Subiendo...' : 'GitHub'}
           </button>
           
           <button
             id="sandbox-save-btn"
             onClick={handleSave}
-            className="col-span-2 sm:col-auto justify-center px-4 py-2 flex items-center gap-1.5 text-sm font-medium text-white bg-[#ea5837] hover:bg-[#c84223] dark:bg-brand-600 dark:hover:bg-brand-500 rounded-xl transition-all shadow-sm dark:shadow-brand-md"
+            className="flex-shrink-0 px-4 py-2 flex items-center gap-1.5 text-sm font-medium text-white bg-[#ea5837] hover:bg-[#c84223] dark:bg-brand-600 dark:hover:bg-brand-500 rounded-xl transition-all shadow-sm dark:shadow-brand-md whitespace-nowrap"
           >
-            <Save size={16} /> Guardar
+            <Save size={16} className="shrink-0" /> Guardar
           </button>
         </div>
       </div>
