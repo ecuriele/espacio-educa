@@ -7,7 +7,7 @@
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { StreakModel, AchievementModel, ACHIEVEMENT_CATALOG, ChallengeModel } from '@db/models';
-import { getLeaderboard, incrementUserXp, getUserSubmissionCount, getUserHighestGrade } from '@services/firebase/firestoreService';
+import { getLeaderboard, incrementUserXp, getUserSubmissionCount, getUserHighestGrade, updateUserStreak } from '@services/firebase/firestoreService';
 
 export const RANKS = [
   { id: 'newcomer', label: 'Novato',    minXp: 0,    icon: '🌱', color: '#94a3b8' },
@@ -65,6 +65,9 @@ export const recordDailyActivity = createAsyncThunk(
   'gamification/recordDailyActivity',
   async (userId, { dispatch, getState }) => {
     const streakData = await StreakModel.recordActivity(userId);
+    // Guardar racha en Firebase para que los profesores la vean en el Dashboard
+    await updateUserStreak(userId, streakData.rachaActual);
+
     // Verificar si se ganó un badge de racha
     const { rachaActual } = streakData;
     if ([3, 7, 30].includes(rachaActual)) {

@@ -137,7 +137,7 @@ export function FullStudentRow({ student, entregas, totalBasico, totalAvanzado }
       <td className="px-4 py-3.5 hidden md:table-cell">
         <div className="flex flex-col gap-1">
           <span className="flex items-center gap-1 text-sm font-bold text-amber-500">
-            {student.totalXp ?? 0} <span className="text-[10px] text-slate-400 font-normal">XP</span>
+            {student.xp ?? 0} <span className="text-[10px] text-slate-400 font-normal">XP</span>
           </span>
           <span className="flex items-center gap-1 text-xs font-semibold text-slate-700 dark:text-slate-300">
             <Flame size={12} className={student.currentStreak > 0 ? 'text-orange-400' : 'text-slate-300'} />

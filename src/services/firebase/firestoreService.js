@@ -382,6 +382,21 @@ export async function updateUserXp(userId, newXp) {
   }
 }
 
+/**
+ * Actualiza la racha de un estudiante en su perfil.
+ */
+export async function updateUserStreak(userId, currentStreak) {
+  try {
+    const userRef = doc(db, 'perfiles_usuarios', userId);
+    await updateDoc(userRef, {
+      currentStreak: currentStreak,
+      actualizadoEn: serverTimestamp()
+    });
+  } catch (err) {
+    console.error('[firestoreService] updateUserStreak error:', err.message);
+  }
+}
+
 // ENTREGAS DE POPCODES (colección: 'entregas')
 
 /**
