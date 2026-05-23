@@ -179,7 +179,7 @@ export default function AppShell() {
         />
       )}
 
-          SIDEBAR
+      {/* Sidebar */}
       <aside
         className={clsx(
           'fixed top-0 left-0 h-full z-40 flex flex-col',
@@ -326,7 +326,7 @@ export default function AppShell() {
         )}
       </aside>
 
-          ÁREA PRINCIPAL
+      {/* Main Area */}
       <div
         className={clsx(
           'flex flex-col flex-1 min-w-0 transition-all duration-300',
