@@ -37,8 +37,12 @@ export default function LeaderboardPage() {
       {/* Mi posición */}
       {!isTeacher && (
         <div className="bg-gradient-to-br from-brand-600 to-brand-800 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-6 shadow-glow">
-        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white/10 flex items-center justify-center border-4 border-white/20 shrink-0 text-white font-bold text-3xl">
-          {currentUser?.nombreMostrar?.[0]?.toUpperCase() ?? '?'}
+        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white/10 flex items-center justify-center border-4 border-white/20 shrink-0 text-white font-bold text-3xl overflow-hidden">
+          {currentUser?.avatarUrl ? (
+            <img src={currentUser.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+          ) : (
+            currentUser?.nombreMostrar?.[0]?.toUpperCase() ?? '?'
+          )}
         </div>
         <div className="text-center sm:text-left flex-1 text-white">
           <p className="text-sm font-bold text-slate-900 dark:text-white">{currentUser?.nombreMostrar ?? 'Tú'} <span className="text-accent-600 dark:text-brand-300 text-xs">(Tú)</span></p>
@@ -63,8 +67,12 @@ export default function LeaderboardPage() {
               <span className="text-xl w-8 text-center font-bold flex justify-center">
                 {index < 3 ? MEDALS[index] : <span className="text-slate-400 text-sm">{index + 1}</span>}
               </span>
-              <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-surface-border text-slate-600 dark:text-slate-400 font-bold flex items-center justify-center text-xs">
-                {entry.displayName?.[0]?.toUpperCase()}
+              <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-surface-border text-slate-600 dark:text-slate-400 font-bold flex items-center justify-center text-xs overflow-hidden shrink-0">
+                {entry.avatar ? (
+                  <img src={entry.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  entry.displayName?.[0]?.toUpperCase() ?? '?'
+                )}
               </div>
               <div className="flex-1">
                 <p className={`text-sm font-semibold ${isMe ? 'text-brand-600 dark:text-brand-400' : 'text-slate-900 dark:text-white'}`}>
