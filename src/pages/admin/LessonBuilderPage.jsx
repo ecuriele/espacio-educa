@@ -488,7 +488,7 @@ export default function LessonBuilderPage() {
   const [saving,  setSaving]              = useState(false);
   const [saved,   setSaved]               = useState(false);
   const [loading, setLoading]             = useState(true);
-  const [previewMode, setPreviewMode]     = useState('mobile');
+  const [previewMode, setPreviewMode]     = useState('desktop');
   const [showPreview, setShowPreview]     = useState(true);
   const [splitRatio,  setSplitRatio]      = useState(50); // % del editor en split
   const splitWrapperRef = useRef(null);
@@ -637,13 +637,13 @@ export default function LessonBuilderPage() {
 
           {/* Toggle vista */}
           <div className="flex items-center bg-surface-hover rounded-lg p-0.5">
-            <button onClick={() => setPreviewMode('mobile')}
-              className={clsx('p-1.5 rounded-md transition-all', previewMode === 'mobile' ? 'bg-surface-card text-white shadow' : 'text-slate-500 hover:text-white')}>
-              <Smartphone size={14} />
-            </button>
             <button onClick={() => setPreviewMode('desktop')}
               className={clsx('p-1.5 rounded-md transition-all', previewMode === 'desktop' ? 'bg-surface-card text-white shadow' : 'text-slate-500 hover:text-white')}>
               <Monitor size={14} />
+            </button>
+            <button onClick={() => setPreviewMode('mobile')}
+              className={clsx('p-1.5 rounded-md transition-all', previewMode === 'mobile' ? 'bg-surface-card text-white shadow' : 'text-slate-500 hover:text-white')}>
+              <Smartphone size={14} />
             </button>
           </div>
 
