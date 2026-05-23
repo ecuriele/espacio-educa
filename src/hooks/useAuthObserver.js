@@ -34,6 +34,8 @@ function sanitizeProfile(profile) {
     nombreMostrar: profile.nombreMostrar || profile.displayName || correo?.split('@')[0] || 'Usuario',
     rol:           profile.rol || profile.role || 'student',
     xp:            profile.xp || 0,
+    colegio:       profile.colegio || null,
+    salon:         profile.salon || null,
     preferencias:  profile.preferencias || profile.preferences || { theme: 'dark', language: 'es', editorFontSize: 14, notifications: true },
   };
 }
@@ -67,6 +69,8 @@ export default function useAuthObserver() {
             nombreMostrar: profile.nombreMostrar,
             avatarUrl:     profile.avatarUrl,
             rol:           profile.rol,
+            colegio:       profile.colegio,
+            salon:         profile.salon,
             preferencias:  profile.preferencias,
           });
         } catch (err) {
@@ -81,6 +85,8 @@ export default function useAuthObserver() {
             avatarUrl:     profile.avatarUrl  || null,
             rol:           profile.rol,
             xp:            profile.xp,
+            colegio:       profile.colegio,
+            salon:         profile.salon,
             preferencias:  profile.preferencias,
           },
           sessionMode: navigator.onLine ? 'online' : 'offline',
