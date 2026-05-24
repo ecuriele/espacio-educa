@@ -430,7 +430,7 @@ export async function crearEntrega({ estudianteId, estudianteNombre, leccionId, 
     tipo: 'popcode',
     ediciones: firestoreIncrement(1)
   }, { merge: true });
-  
+
   return entregaId;
 }
 
@@ -438,13 +438,23 @@ export async function getUserSubmissionCount(userId) {
   let total = 0;
   try {
     const q1 = query(collection(db, 'entregas'), where('estudianteId', '==', userId));
-    const snap1 = await getCountFromServer(q1);
-    total += snap1.data().count;
+    try {
+      const snap1 = await getDocs(q1);
+      total += snap1.size;
+    } catch (e) {
+      const cache1 = await getDocsFromCache(q1);
+      total += cache1.size;
+    }
     
     // Check legacy collection just in case
     const q2 = query(collection(db, 'submissions'), where('studentId', '==', userId));
-    const snap2 = await getCountFromServer(q2);
-    total += snap2.data().count;
+    try {
+      const snap2 = await getDocs(q2);
+      total += snap2.size;
+    } catch (e) {
+      const cache2 = await getDocsFromCache(q2);
+      total += cache2.size;
+    }
   } catch (err) {
     console.warn('Error getting submission count:', err);
   }
@@ -455,7 +465,12 @@ export async function getUserHighestGrade(userId) {
   let highest = 0;
   try {
     const q = query(collection(db, 'entregas'), where('estudianteId', '==', userId));
-    const snap = await getDocs(q);
+    let snap;
+    try {
+      snap = await getDocs(q);
+    } catch (e) {
+      snap = await getDocsFromCache(q);
+    }
     snap.forEach(doc => {
       const calificacion = Number(doc.data().calificacion) || 0;
       if (calificacion > highest) highest = calificacion;

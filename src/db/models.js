@@ -209,31 +209,31 @@ export const ProgressModel = {
  */
 export const ACHIEVEMENT_CATALOG = [
   // Rachas
-  { id: 'streak_3',        titulo: '3 dias seguidos',    descripcion: 'Inicia sesion 3 dias consecutivos',                 icono: 'fire',    tipo: 'badge',  xp: 50,  requisito: '3 dias de racha' },
-  { id: 'streak_7',        titulo: 'Una semana activo',  descripcion: 'Inicia sesion 7 dias seguidos',                      icono: 'bolt',    tipo: 'medal',  xp: 150, requisito: '7 dias de racha' },
-  { id: 'streak_30',       titulo: 'Mes imparable',      descripcion: 'Mantente activo durante 30 dias',                    icono: 'muscle',  tipo: 'trophy', xp: 500, requisito: '30 dias de racha' },
+  { id: 'streak_3', titulo: '3 dias seguidos', descripcion: 'Inicia sesion 3 dias consecutivos', icono: 'fire', tipo: 'badge', xp: 50, requisito: '3 dias de racha' },
+  { id: 'streak_7', titulo: 'Una semana activo', descripcion: 'Inicia sesion 7 dias seguidos', icono: 'bolt', tipo: 'medal', xp: 150, requisito: '7 dias de racha' },
+  { id: 'streak_30', titulo: 'Mes imparable', descripcion: 'Mantente activo durante 30 dias', icono: 'muscle', tipo: 'trophy', xp: 500, requisito: '30 dias de racha' },
   // Entregas y participacion
-  { id: 'first_lesson',    titulo: 'Primer paso',        descripcion: 'Entrega tu primera actividad',                       icono: 'sprout',  tipo: 'badge',  xp: 20,  requisito: '1 entrega' },
-  { id: 'submit_5',        titulo: 'En marcha',          descripcion: 'Entrega 5 actividades',                              icono: 'rocket',  tipo: 'badge',  xp: 80,  requisito: '5 entregas' },
-  { id: 'submit_10',       titulo: 'Imparable',          descripcion: 'Entrega 10 actividades',                             icono: 'target',  tipo: 'medal',  xp: 150, requisito: '10 entregas' },
-  { id: 'submit_25',       titulo: 'Dedicacion total',   descripcion: 'Entrega 25 actividades',                             icono: 'wizard',  tipo: 'trophy', xp: 400, requisito: '25 entregas' },
-  { id: 'nota_perfect',    titulo: 'Nota perfecta',      descripcion: 'Saca 20/20 en una actividad',                        icono: 'trophy',  tipo: 'badge',  xp: 100, requisito: '20/20 en una actividad' },
-  { id: 'nota_excelente',  titulo: 'Excelente',          descripcion: 'Saca 18 o mas en una actividad',                     icono: 'star',    tipo: 'badge',  xp: 60,  requisito: '>=18/20 en una actividad' },
-  { id: 'nota_buena',      titulo: 'Buen estudiante',    descripcion: 'Saca 14 o mas en una actividad',                     icono: 'thumb',   tipo: 'badge',  xp: 30,  requisito: '>=14/20 en una actividad' },
+  { id: 'first_lesson', titulo: 'Primer paso', descripcion: 'Entrega tu primera actividad', icono: 'sprout', tipo: 'badge', xp: 20, requisito: '1 entrega' },
+  { id: 'submit_5', titulo: 'En marcha', descripcion: 'Entrega 5 actividades', icono: 'rocket', tipo: 'badge', xp: 80, requisito: '5 entregas' },
+  { id: 'submit_10', titulo: 'Imparable', descripcion: 'Entrega 10 actividades', icono: 'target', tipo: 'medal', xp: 150, requisito: '10 entregas' },
+  { id: 'submit_25', titulo: 'Dedicacion total', descripcion: 'Entrega 25 actividades', icono: 'wizard', tipo: 'trophy', xp: 400, requisito: '25 entregas' },
+  { id: 'nota_perfect', titulo: 'Nota perfecta', descripcion: 'Saca 20/20 en una actividad', icono: 'trophy', tipo: 'badge', xp: 100, requisito: '20/20 en una actividad' },
+  { id: 'nota_excelente', titulo: 'Excelente', descripcion: 'Saca 18 o mas en una actividad', icono: 'star', tipo: 'badge', xp: 60, requisito: '>=18/20 en una actividad' },
+  { id: 'nota_buena', titulo: 'Buen estudiante', descripcion: 'Saca 14 o mas en una actividad', icono: 'thumb', tipo: 'badge', xp: 30, requisito: '>=14/20 en una actividad' },
   // Modulos
-  { id: 'module_basic',    titulo: 'Modulo Basico',      descripcion: 'Completa todas las actividades del modulo basico',   icono: 'grad',    tipo: 'medal',  xp: 300, requisito: 'Completar modulo basico' },
-  { id: 'module_advanced', titulo: 'Modulo Avanzado',    descripcion: 'Completa todas las actividades del modulo avanzado', icono: 'rocket',  tipo: 'trophy', xp: 600, requisito: 'Completar modulo avanzado' },
+  { id: 'module_basic', titulo: 'Modulo Basico', descripcion: 'Completa todas las actividades del modulo basico', icono: 'grad', tipo: 'medal', xp: 300, requisito: 'Completar modulo basico' },
+  { id: 'module_advanced', titulo: 'Modulo Avanzado', descripcion: 'Completa todas las actividades del modulo avanzado', icono: 'rocket', tipo: 'trophy', xp: 600, requisito: 'Completar modulo avanzado' },
   // Editor / Sandbox
-  { id: 'sandbox_10',      titulo: 'Explorador',         descripcion: 'Guarda 10 proyectos en el sandbox',                  icono: 'flask',   tipo: 'badge',  xp: 80,  requisito: '10 proyectos en sandbox' },
-  { id: 'github_link',     titulo: 'Open Source',        descripcion: 'Vincula tu cuenta de GitHub',                        icono: 'octo',    tipo: 'badge',  xp: 100, requisito: 'Vincular GitHub' },
+  { id: 'sandbox_10', titulo: 'Explorador', descripcion: 'Guarda 10 proyectos en el sandbox', icono: 'flask', tipo: 'badge', xp: 80, requisito: '10 proyectos en sandbox' },
+  { id: 'github_link', titulo: 'Open Source', descripcion: 'Vincula tu cuenta de GitHub', icono: 'octo', tipo: 'badge', xp: 100, requisito: 'Vincular GitHub' },
   // Retos
-  { id: 'daily_7',         titulo: 'Reto semanal',       descripcion: 'Completa 7 retos diarios',                           icono: 'cal',     tipo: 'medal',  xp: 200, requisito: '7 retos diarios' },
-  { id: 'weekly_4',        titulo: 'Cuatro semanas',     descripcion: 'Completa 4 retos semanales',                         icono: 'trophy',  tipo: 'trophy', xp: 400, requisito: '4 retos semanales' },
+  { id: 'daily_7', titulo: 'Reto semanal', descripcion: 'Completa 7 retos diarios', icono: 'cal', tipo: 'medal', xp: 200, requisito: '7 retos diarios' },
+  { id: 'weekly_4', titulo: 'Cuatro semanas', descripcion: 'Completa 4 retos semanales', icono: 'trophy', tipo: 'trophy', xp: 400, requisito: '4 retos semanales' },
   // Ranking
-  { id: 'rank_bronze',     titulo: 'Bronce',             descripcion: 'Alcanza el rango Bronce',                            icono: 'bronze',  tipo: 'rank',   xp: 0,   requisito: '500 XP' },
-  { id: 'rank_silver',     titulo: 'Plata',              descripcion: 'Alcanza el rango Plata',                             icono: 'silver',  tipo: 'rank',   xp: 0,   requisito: '1500 XP' },
-  { id: 'rank_gold',       titulo: 'Oro',                descripcion: 'Alcanza el rango Oro',                               icono: 'gold',    tipo: 'rank',   xp: 0,   requisito: '3000 XP' },
-  { id: 'rank_diamond',    titulo: 'Diamante',           descripcion: 'Alcanza el rango Diamante',                          icono: 'diamond', tipo: 'rank',   xp: 0,   requisito: '6000 XP' },
+  { id: 'rank_bronze', titulo: 'Bronce', descripcion: 'Alcanza el rango Bronce', icono: 'bronze', tipo: 'rank', xp: 0, requisito: '500 XP' },
+  { id: 'rank_silver', titulo: 'Plata', descripcion: 'Alcanza el rango Plata', icono: 'silver', tipo: 'rank', xp: 0, requisito: '1500 XP' },
+  { id: 'rank_gold', titulo: 'Oro', descripcion: 'Alcanza el rango Oro', icono: 'gold', tipo: 'rank', xp: 0, requisito: '3000 XP' },
+  { id: 'rank_diamond', titulo: 'Diamante', descripcion: 'Alcanza el rango Diamante', icono: 'diamond', tipo: 'rank', xp: 0, requisito: '6000 XP' },
 ];
 export const AchievementModel = {
   async unlock(usuarioId, logroId) {
