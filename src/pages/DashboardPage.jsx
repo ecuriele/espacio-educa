@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { selectCurrentUser } from '@store/slices/authSlice';
-import { selectStreak, selectTotalXp, selectRank, selectRankProgress, recordDailyActivity, setInitialXp } from '@store/slices/gamificationSlice';
+import { selectStreak, selectTotalXp, selectRank, selectRankProgress, recordDailyActivity, setInitialXp, checkSubmissionAchievements } from '@store/slices/gamificationSlice';
 import { selectProgressSummary, loadProgressSummary } from '@store/slices/progressSlice';
 import { selectIsOnline } from '@store/slices/uiSlice';
 import ProgressBar from '@components/gamification/ProgressBar';
@@ -24,6 +24,13 @@ export default function DashboardPage() {
   const [totalMap, setTotalMap] = useState({});
   const [progresoMap, setProgresoMap] = useState({});
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (user?.id && isOnline) {
+      // Revisa medallas si cumpliste requisitos estando offline pero no se otorgaron
+      dispatch(checkSubmissionAchievements(user.id));
+    }
+  }, [user?.id, isOnline, dispatch]);
 
   useEffect(() => {
     if (user?.id) {
