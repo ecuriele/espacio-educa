@@ -132,13 +132,7 @@ export default function ModulesPage() {
             const total      = totalMap[modulo.id] ?? modulo.totalLecciones ?? 0;
             const completadas = progresoMap[modulo.id] ?? 0;
             const porcentaje  = total > 0 ? Math.round((completadas / total) * 100) : 0;
-            let isLocked = false;
-            if (!isTeacher && idx > 0) {
-              const prevModulo = listaModulos[idx - 1];
-              const prevTotal = totalMap[prevModulo.id] ?? prevModulo.totalLecciones ?? 0;
-              const prevCompletadas = progresoMap[prevModulo.id] ?? 0;
-              isLocked = prevTotal > 0 && prevCompletadas < prevTotal;
-            }
+            const isLocked = false;
             
             const completo    = porcentaje === 100 && total > 0;
 
@@ -261,15 +255,8 @@ export default function ModulesPage() {
         </div>
       ) : (
         <>
-          {(!user || user.salon?.toLowerCase() === 'básico' || isTeacher) && renderLevel(modulosBasicos, 'basic')}
-          {(!user || user.salon?.toLowerCase() === 'avanzado' || isTeacher) && renderLevel(modulosAvanzados, 'advanced')}
-          {/* Si no tiene salon asignado, mostrar ambos */}
-          {user && !user.salon && !isTeacher && (
-            <>
-              {renderLevel(modulosBasicos, 'basic')}
-              {renderLevel(modulosAvanzados, 'advanced')}
-            </>
-          )}
+          {(!user || user.salon?.toLowerCase().includes('basic') || user.salon?.toLowerCase().includes('básic') || isTeacher || !user.salon) && renderLevel(modulosBasicos, 'basic')}
+          {(!user || user.salon?.toLowerCase().includes('avanzad') || isTeacher || !user.salon) && renderLevel(modulosAvanzados, 'advanced')}
         </>
       )}
     </div>
