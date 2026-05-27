@@ -439,18 +439,19 @@ export async function getUserSubmissionCount(userId) {
   try {
     const q1 = query(collection(db, 'entregas'), where('estudianteId', '==', userId));
     try {
-      const snap1 = await getDocs(q1);
-      total += snap1.size;
+      // getCountFromServer cuesta 1 sola lectura, optimización crucial
+      const snap1 = await getCountFromServer(q1);
+      total += snap1.data().count;
     } catch (e) {
+      // Fallback offline
       const cache1 = await getDocsFromCache(q1);
       total += cache1.size;
     }
     
-    // Check legacy collection just in case
     const q2 = query(collection(db, 'submissions'), where('studentId', '==', userId));
     try {
-      const snap2 = await getDocs(q2);
-      total += snap2.size;
+      const snap2 = await getCountFromServer(q2);
+      total += snap2.data().count;
     } catch (e) {
       const cache2 = await getDocsFromCache(q2);
       total += cache2.size;

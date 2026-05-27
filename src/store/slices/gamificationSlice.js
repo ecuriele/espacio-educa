@@ -65,8 +65,13 @@ export const recordDailyActivity = createAsyncThunk(
   'gamification/recordDailyActivity',
   async (userId, { dispatch, getState }) => {
     const streakData = await StreakModel.recordActivity(userId);
-    // Guardar racha en Firebase para que los profesores la vean en el Dashboard
-    await updateUserStreak(userId, streakData.rachaActual);
+    const state = getState();
+    const isNewDay = state.gamification.streak.lastActivityDate !== streakData.lastActivityDate;
+    
+    // Guardar racha en Firebase solo si cambió el día (ahorra miles de ESCRITURAS)
+    if (isNewDay) {
+      await updateUserStreak(userId, streakData.rachaActual);
+    }
 
     // Verificar si se ganó un badge de racha
     const { rachaActual } = streakData;
