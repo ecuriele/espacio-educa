@@ -1,43 +1,95 @@
-# Arquitectura y Base de Datos - Espacio Educa
+# Documentación de Arquitectura y Datos
 
-La aplicación utiliza una arquitectura **Offline-First** híbrida. Consiste en dos bases de datos sincronizadas para permitir que los estudiantes puedan usar la plataforma sin interrupciones, incluso si el internet del colegio falla.
+A continuación se presentan los diagramas de arquitectura, flujo de sincronización asíncrona y modelo físico de datos local para la PWA de Espacio Educa.
 
-## 1. Diagrama de Flujo Offline-First
+### Figura 1. Arquitectura de Componentes del Sistema PWA
+
+Este diagrama de nivel de contenedores (C4) muestra cómo el Cliente se comunica con la Nube a través de la capa intermedia del Service Worker y las bases de datos locales.
 
 ```mermaid
 flowchart TD
-    A[Estudiante usa la App React/PWA] --> B{¿Hay conexión a Internet?}
-    
-    B -- SÍ --> C[Peticiones directas a Firebase Firestore]
-    C --> D[Actualiza estado en DB Local IndexedDB]
-    
-    B -- NO --> E[Guarda acciones en IndexedDB localmente]
-    E --> F[Añade tarea a Cola de Sincronización]
-    F --> G{¿Vuelve la conexión WiFi?}
-    
-    G -- SÍ --> H[Sincronización silenciosa en 2do plano]
-    H --> C
+    subgraph Cliente ["Capa Cliente (Dispositivo Móvil / Navegador)"]
+        UI["Interfaz de Usuario (UI)"]
+        State["Gestor de Estado (State)"]
+        Sandbox["Editor de Código (Sandbox)"]
+        
+        UI <--> State
+        Sandbox <--> State
+    end
+
+    subgraph Intermedia ["Capa Intermedia (Controlador)"]
+        SW["Service Worker (Workbox)"]
+    end
+
+    subgraph Almacenamiento ["Capa de Almacenamiento Local"]
+        Cache["Cache Storage API\n(Archivos Estáticos)"]
+        IDB[("IndexedDB\n(Datos Dinámicos)")]
+    end
+
+    subgraph Servidor ["Capa Servidor (Nube)"]
+        Backend{"Backend (API REST /\nBD Principal)"}
+    end
+
+    UI -->|Peticiones HTTP| SW
+    SW <--> Cache
+    SW <--> IDB
+    SW -.->|Conexión Condicional| Backend
 ```
 
-## 2. Modelos de Datos
+### Figura 2. Flujo de Sincronización Asíncrona (Background Sync)
 
-### Firestore (En la Nube / Firebase)
-Almacena la verdad absoluta y sincroniza los datos entre todos los dispositivos y usuarios.
+Diagrama de Secuencia que ilustra el proceso de entrega de un reto cuando no hay conexión a internet y su posterior sincronización.
 
-* **`perfiles_usuarios`**: UID de Firebase, correo, nombreMostrar, rol (estudiante/profesor/admin), xp, colegio, salon, preferencias.
-* **`modulos`**: nivel (básico/avanzado), orden (número), título, descripción, isPublished.
-* **`lecciones`**: ID, moduloId (relación con módulos), título, bloques (array de contenido y popcodes).
-* **`entregas`**: estudianteId, leccionId, código entregado, calificación, feedback, entregadoEn.
+```mermaid
+sequenceDiagram
+    participant Estudiante
+    participant UI as UI (Frontend)
+    participant SW as Service Worker
+    participant IDB as IndexedDB
+    participant Servidor as Servidor Remoto
 
-### IndexedDB (Local / Navegador)
-Motor: `idb` (espacio-educa-db-v2). Propósito: Permitir el uso de la aplicación offline y servir como caché ultra rápido.
+    Estudiante->>UI: Clic en "Entregar Reto" (Offline)
+    UI->>SW: Petición HTTP (POST) interceptada
+    SW->>Servidor: Fetch Failed (Sin conexión)
+    Servidor-->>SW: (Falla)
+    SW->>IDB: Guarda el payload en "Cola de Sincronización"
+    IDB-->>SW: Guardado OK
+    SW-->>UI: Devuelve evento de éxito local
+    UI-->>Estudiante: Notificación "Guardado en el dispositivo. Se enviará luego"
 
-* **`usuarios`**: Sesión local guardada para acceder sin WiFi.
-* **`modulos`**: Caché del pensum de estudios.
-* **`lecciones`**: Caché de la teoría y ejercicios de cada clase.
-* **`progreso`**: (Llave compuesta: `usuarioId` + `leccionId`) Rastrea qué ha completado el alumno.
-* **`logros`**: Caché de medallas desbloqueadas por el alumno.
-* **`retos`**: Ejercicios adicionales temporales.
-* **`rachas`**: Días consecutivos que el alumno entra a la app.
-* **`proyectosSandbox`**: Código libre que el estudiante guarda en su computadora sin subirlo a la nube.
-* **`colaSincronizacion`**: El corazón del offline-first. Almacena las tareas pendientes (como entregar una lección) que no se enviaron por falta de internet.
+    Note over Estudiante, Servidor: (Pausa / Recuperación de Red)
+
+    Estudiante->>SW: Navegador dispara evento Sync
+    SW->>IDB: Recupera tareas encoladas
+    IDB-->>SW: Retorna payloads
+    SW->>Servidor: Envía petición HTTP (POST)
+    Servidor-->>SW: Respuesta 200 OK
+    SW->>IDB: Elimina la tarea de la cola local
+```
+
+### Figura 3. Modelo Físico de Datos Local en IndexedDB
+
+Diagrama Entidad-Relación de las principales tablas (Object Stores) guardadas localmente.
+
+```mermaid
+erDiagram
+    Perfil_Usuario {
+        int usuario_id PK
+        string nombre_completo
+        int racha_actual
+        array medallas_ganadas
+    }
+
+    Progreso_Curso {
+        string reto_id PK
+        enum estado "Completado | Pendiente"
+        string codigo_fuente
+    }
+
+    Cola_Sincronizacion {
+        string tarea_id PK
+        string endpoint_destino
+        json payload
+        date timestamp_creacion
+    }
+```
