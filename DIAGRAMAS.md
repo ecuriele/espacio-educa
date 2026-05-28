@@ -4,92 +4,109 @@ A continuación se presentan los diagramas de arquitectura, flujo de sincronizac
 
 ### Figura 1. Arquitectura de Componentes del Sistema PWA
 
-Este diagrama de nivel de contenedores (C4) muestra cómo el Cliente se comunica con la Nube a través de la capa intermedia del Service Worker y las bases de datos locales.
+Este diagrama de nivel de contenedores (C4) muestra cómo el Cliente se comunica con la Nube. Destaca la separación entre archivos estáticos manejados por el Service Worker y los datos dinámicos manejados directamente por React/Redux hacia Firebase.
 
 ```mermaid
 flowchart TD
-    subgraph Cliente ["Capa Cliente (Dispositivo Móvil / Navegador)"]
+    subgraph Cliente ["Capa Cliente (App React)"]
         UI["Interfaz de Usuario (UI)"]
-        State["Gestor de Estado (State)"]
+        State["Gestor de Estado (Redux Toolkit)"]
         Sandbox["Editor de Código (Sandbox)"]
         
         UI <--> State
         Sandbox <--> State
     end
 
-    subgraph Intermedia ["Capa Intermedia (Controlador)"]
-        SW["Service Worker (Workbox)"]
+    subgraph Almacenamiento_Local ["Capa de Almacenamiento Local"]
+        SW["Service Worker (Workbox)"] <--> Cache["Cache Storage API\n(Archivos Estáticos HTML/CSS/JS)"]
+        State <--> IDB[("IndexedDB\n(Datos Dinámicos y Sync Queue)")]
     end
 
-    subgraph Almacenamiento ["Capa de Almacenamiento Local"]
-        Cache["Cache Storage API\n(Archivos Estáticos)"]
-        IDB[("IndexedDB\n(Datos Dinámicos)")]
+    subgraph Servidor ["Capa Servidor (Nube Firebase)"]
+        Backend{"Firebase Services\n(Firestore / Auth / Storage)"}
     end
 
-    subgraph Servidor ["Capa Servidor (Nube)"]
-        Backend{"Backend (API REST /\nBD Principal)"}
-    end
-
-    UI -->|Peticiones HTTP| SW
-    SW <--> Cache
-    SW <--> IDB
-    SW -.->|Conexión Condicional| Backend
+    Cliente -->|Carga inicial app| SW
+    State <-.->|Conexión WebSockets| Backend
 ```
 
-### Figura 2. Flujo de Sincronización Asíncrona (Background Sync)
+### Figura 2. Flujo de Sincronización Asíncrona (Offline-First)
 
-Diagrama de Secuencia que ilustra el proceso de entrega de un reto cuando no hay conexión a internet y su posterior sincronización.
+Diagrama de Secuencia que ilustra el proceso de entrega de un reto cuando no hay conexión a internet y su posterior sincronización controlada por Redux y la cola nativa.
 
 ```mermaid
 sequenceDiagram
     participant Estudiante
-    participant UI as UI (Frontend)
-    participant SW as Service Worker
-    participant IDB as IndexedDB
-    participant Servidor as Servidor Remoto
+    participant React as App React (UI)
+    participant Redux as Redux (syncSlice)
+    participant IDB as IndexedDB (colaSincronizacion)
+    participant Firestore as Firebase Firestore
 
-    Estudiante->>UI: Clic en "Entregar Reto" (Offline)
-    UI->>SW: Petición HTTP (POST) interceptada
-    SW->>Servidor: Fetch Failed (Sin conexión)
-    Servidor-->>SW: (Falla)
-    SW->>IDB: Guarda el payload en "Cola de Sincronización"
-    IDB-->>SW: Guardado OK
-    SW-->>UI: Devuelve evento de éxito local
-    UI-->>Estudiante: Notificación "Guardado en el dispositivo. Se enviará luego"
+    Estudiante->>React: Clic en "Entregar Reto" (Offline)
+    React->>Firestore: Intenta guardar el documento
+    Firestore-->>React: Falla (Sin conexión a internet)
+    React->>IDB: Guarda la operación en la 'colaSincronizacion'
+    IDB-->>React: Guardado local OK
+    React-->>Estudiante: Notificación "Guardado en el dispositivo. Se enviará luego"
 
-    Note over Estudiante, Servidor: (Pausa / Recuperación de Red)
+    Note over Estudiante, Firestore: (Pausa / Recuperación de Red)
 
-    Estudiante->>SW: Navegador dispara evento Sync
-    SW->>IDB: Recupera tareas encoladas
-    IDB-->>SW: Retorna payloads
-    SW->>Servidor: Envía petición HTTP (POST)
-    Servidor-->>SW: Respuesta 200 OK
-    SW->>IDB: Elimina la tarea de la cola local
+    Estudiante->>React: Navegador detecta red y dispara evento 'online'
+    React->>Redux: Ejecuta syncPendingItems()
+    Redux->>IDB: Recupera tareas pendientes
+    IDB-->>Redux: Retorna payloads de la cola
+    Redux->>Firestore: Envía la petición (Sincronización)
+    Firestore-->>Redux: Respuesta de éxito
+    Redux->>IDB: Elimina la tarea de la cola local
 ```
 
 ### Figura 3. Modelo Físico de Datos Local en IndexedDB
 
-Diagrama Entidad-Relación de las principales tablas (Object Stores) guardadas localmente.
+Diagrama Entidad-Relación de los principales Object Stores (tablas) guardados localmente para permitir el funcionamiento sin conexión, correspondientes al esquema real de `schema.js`.
 
 ```mermaid
 erDiagram
-    Perfil_Usuario {
-        int usuario_id PK
-        string nombre_completo
-        int racha_actual
-        array medallas_ganadas
+    usuarios {
+        string id PK
+        string correo
+        string nombreMostrar
+        string rol
     }
 
-    Progreso_Curso {
-        string reto_id PK
-        enum estado "Completado | Pendiente"
-        string codigo_fuente
+    progreso {
+        string usuarioId_leccionId PK "Llave Compuesta"
+        string estado "no_iniciado | en_progreso | completado"
+        boolean sincronizado
     }
 
-    Cola_Sincronizacion {
-        string tarea_id PK
-        string endpoint_destino
+    logros {
+        string usuarioId_logroId PK "Llave Compuesta"
+        date fecha
+        boolean visto
+    }
+    
+    rachas {
+        string usuarioId PK
+        int rachaActual
+        date ultimaActividad
+    }
+
+    proyectosSandbox {
+        string id PK
+        string usuarioId
+        string codigo
+        date actualizadoEn
+    }
+
+    colaSincronizacion {
+        int id PK "Autoincremental"
+        string tipo "submission | progress_update"
         json payload
-        date timestamp_creacion
+        string estado "pendiente | procesando | fallido"
     }
+
+    usuarios ||--o{ progreso : "registra"
+    usuarios ||--o{ logros : "gana"
+    usuarios ||--|| rachas : "mantiene"
+    usuarios ||--o{ proyectosSandbox : "crea"
 ```
