@@ -17,20 +17,55 @@ import { FIREBASE_CONFIGURED } from '@services/firebase/config';
 
 const CAROUSEL_SLIDES = [
   {
-    image: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&q=80',
+    image: '/carrusel/foto5.jpg',
     title: 'Construimos el futuro de Venezuela, una línea de código a la vez.',
     subtitle: 'Aprende programación desde cero, sin necesidad de conexión a internet constante.',
   },
   {
-    image: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80',
+    image: '/carrusel/foto4.jpg',
+    title: 'Feria de proyectos',
+    subtitle: 'Nuestros estudiantes presentan sus creaciones al mundo.',
+  },
+  {
+    image: '/carrusel/foto10.jpg',
+    title: 'Aprendizaje que transforma',
+    subtitle: 'Cada clase es una oportunidad de crecer y crear.',
+  },
+  {
+    image: '/carrusel/foto1.jpg',
+    title: 'Día del Metro 2024',
+    subtitle: 'Tecnología y comunidad van de la mano.',
+  },
+  {
+    image: '/carrusel/foto2.jpg',
+    title: '26 de Octubre 2024',
+    subtitle: 'Programación accesible para todos los estudiantes.',
+  },
+  {
+    image: '/carrusel/foto3.jpg',
     title: 'Acompañamiento en cada paso',
     subtitle: 'Una plataforma diseñada para guiarte en tu aprendizaje técnico.',
   },
   {
-    image: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&q=80',
+    image: '/carrusel/foto7.jpg',
     title: 'Tu salón de clases, en cualquier lugar',
     subtitle: 'Sincroniza tus progresos cuando tengas conexión y sigue aprendiendo offline.',
-  }
+  },
+  {
+    image: '/carrusel/foto6.jpg',
+    title: 'Comunidad de aprendizaje',
+    subtitle: 'Juntos construimos habilidades para el mundo digital.',
+  },
+  {
+    image: '/carrusel/foto8.jpg',
+    title: 'Sábado de práctica',
+    subtitle: 'Resolvemos retos reales con código real.',
+  },
+  {
+    image: '/carrusel/foto9.jpg',
+    title: 'Innovación desde las aulas',
+    subtitle: 'El futuro de Venezuela se programa hoy.',
+  },
 ];
 
 export default function LoginPage() {
