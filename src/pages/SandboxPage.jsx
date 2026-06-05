@@ -18,7 +18,45 @@ export default function SandboxPage() {
   const [snippets, setSnippets] = useState([]);
   const [currentSnippet, setCurrentSnippet] = useState(null);
   const [isExporting, setIsExporting] = useState(false);
-  const [code, setCode] = useState({ html: '', css: '', js: '' });
+  const HTML_TEMPLATE = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Proyecto</title>
+</head>
+<body>
+
+  <h1>¡Hola Mundo!</h1>
+  <p>Bienvenido a tu sandbox de código. ¡Empieza a experimentar!</p>
+
+</body>
+</html>`;
+
+  const CSS_TEMPLATE = `/* ===== Estilos generales ===== */
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f5f5f5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+}
+
+h1 {
+  color: #ea5837;
+  font-size: 2.5rem;
+  text-align: center;
+}
+
+p {
+  color: #555;
+  text-align: center;
+  font-size: 1rem;
+}`;
+
+  const [code, setCode] = useState({ html: HTML_TEMPLATE, css: CSS_TEMPLATE, js: '' });
   const [title, setTitle] = useState('Nuevo proyecto');
   const [editorKey, setEditorKey] = useState('initial');
 
@@ -124,7 +162,7 @@ export default function SandboxPage() {
 
   const handleNew = () => {
     setCurrentSnippet(null);
-    setCode({ html: '<!-- Nuevo proyecto -->\n<h1>Hola Mundo</h1>', css: 'body { font-family: sans-serif; }', js: '' });
+    setCode({ html: HTML_TEMPLATE, css: CSS_TEMPLATE, js: '' });
     setTitle('Nuevo proyecto');
     setEditorKey(Date.now().toString());
   };
