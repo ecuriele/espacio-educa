@@ -33,12 +33,12 @@ const CAROUSEL_SLIDES = [
   },
   {
     image: '/carrusel/foto1.jpg',
-    title: 'Día del Metro 2024',
+    title: 'Visita a la Universidad Metropolitana',
     subtitle: 'Tecnología y comunidad van de la mano.',
   },
   {
     image: '/carrusel/foto2.jpg',
-    title: '26 de Octubre 2024',
+    title: 'Programación para todos',
     subtitle: 'Programación accesible para todos los estudiantes.',
   },
   {
