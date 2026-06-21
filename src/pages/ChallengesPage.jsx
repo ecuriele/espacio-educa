@@ -1,8 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '@store/slices/authSlice';
-import { addXp } from '@store/slices/gamificationSlice';
-import { crearEntrega, incrementUserXp } from '@services/firebase/firestoreService';
+import { crearEntrega } from '@services/firebase/firestoreService';
 import { RETOS_BASICO, RETOS_AVANZADO } from '../data/retos';
 import CodeEditor from '@components/editor/CodeEditor';
 import toast from 'react-hot-toast';
@@ -131,8 +130,6 @@ function InstruccionesPanel({ reto, defaultOpen = false }) {
 
 // ─── Bloque de un reto con editor integrado ──────────────────────────────────
 function RetoConEditor({ reto, tipo, userId, userName, onEntregado }) {
-  const dispatch = useDispatch();
-
   // Estado del editor
   const [code, setCode] = useState(() => {
     const base = reto.codigo_inicial || '';
@@ -189,10 +186,6 @@ function RetoConEditor({ reto, tipo, userId, userName, onEntregado }) {
         jsCode: code.js,
       });
 
-      // Otorgar XP
-      await incrementUserXp(userId, reto.xp);
-      dispatch(addXp({ userId, amount: reto.xp, reason: `Reto completado: ${reto.titulo}` }));
-
       setEntregado(true);
       onEntregado?.();
 
@@ -204,7 +197,7 @@ function RetoConEditor({ reto, tipo, userId, userName, onEntregado }) {
           <div>
             <p className="font-bold text-slate-900 dark:text-white text-sm">¡Reto entregado!</p>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Ganaste <strong className="text-amber-500">+{reto.xp} XP</strong> · Tu profesor lo revisará pronto
+              Tu profesor lo revisará y te asignará la nota pronto
             </p>
           </div>
         </div>
@@ -247,7 +240,7 @@ function RetoConEditor({ reto, tipo, userId, userName, onEntregado }) {
         {entregado ? (
           <div className="flex items-center gap-2 px-4 py-2 bg-green-500/10 border border-green-500/30 rounded-xl text-green-600 dark:text-green-400 text-sm font-semibold">
             <CheckCircle2 size={16} />
-            ¡Entregado! · +{reto.xp} XP
+            ¡Entregado! Esperando revisión del profesor
           </div>
         ) : (
           <button
@@ -263,7 +256,7 @@ function RetoConEditor({ reto, tipo, userId, userName, onEntregado }) {
             ) : (
               <>
                 <Send size={16} />
-                Entregar reto · +{reto.xp} XP
+                Entregar reto
               </>
             )}
           </button>
