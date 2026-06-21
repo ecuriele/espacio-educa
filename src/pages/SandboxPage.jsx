@@ -9,7 +9,7 @@ import { generateId } from '@utils/helpers';
 import { createRepo, pushFiles } from '@services/githubService';
 import { GitHubLinkModel } from '@db/models';
 import { useNavigate } from 'react-router-dom';
-import { FlaskConical, Save, Plus, FileCode, CheckCircle2, Trash2, Github } from 'lucide-react';
+import { FlaskConical, Save, Plus, FileCode, CheckCircle2, Trash2, Github, Loader2, AlertCircle, ExternalLink } from 'lucide-react';
 
 export default function SandboxPage() {
   const dispatch = useDispatch();
@@ -128,8 +128,21 @@ p {
     // Verificar vinculación
     const ghData = await GitHubLinkModel.get(userId);
     if (!ghData?.githubToken) {
-      toast('Debes vincular tu token de GitHub primero', { icon: 'ℹ️' });
-      navigate('/dashboard/github');
+      toast.custom((t) => (
+        <div className={`max-w-xs w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-3 flex items-center gap-3 transition-all duration-300 ${t.visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-4 scale-95 pointer-events-none'}`}>
+          <div className="relative flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-600 p-[2px] shadow-lg shadow-indigo-500/30">
+            <div className="w-full h-full bg-white dark:bg-slate-900 rounded-[10px] flex items-center justify-center">
+              <Github size={18} className="text-indigo-500" />
+            </div>
+            <div className="absolute -inset-1 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-xl blur opacity-30 -z-10" />
+          </div>
+          <div className="flex-1 min-w-0 pt-0.5">
+            <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight mb-0.5">Token de GitHub no vinculado</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400">Redirigiendo a la configuración...</p>
+          </div>
+        </div>
+      ), { duration: 2500, position: 'top-right' });
+      setTimeout(() => navigate('/github'), 1200);
       return;
     }
 
@@ -137,24 +150,70 @@ p {
     if (!repoName) return;
 
     setIsExporting(true);
-    const toastId = toast.loading('Creando repositorio y subiendo archivos...');
+
+    // Toast de carga
+    const loadingToastId = toast.custom((t) => (
+      <div className={`max-w-xs w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-3 flex items-center gap-3 transition-all duration-300 ${t.visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-4 scale-95 pointer-events-none'}`}>
+        <div className="relative flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-slate-400 to-slate-600 p-[2px] shadow-lg">
+          <div className="w-full h-full bg-white dark:bg-slate-900 rounded-[10px] flex items-center justify-center">
+            <Loader2 size={18} className="text-slate-500 animate-spin" />
+          </div>
+        </div>
+        <div className="flex-1 min-w-0 pt-0.5">
+          <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight mb-0.5">Subiendo a GitHub</p>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400">Creando repositorio y subiendo archivos...</p>
+        </div>
+      </div>
+    ), { duration: Infinity, position: 'top-right' });
+
     try {
       // 1. Crear repo
       const repo = await createRepo(ghData.githubToken, repoName, 'Proyecto exportado desde Espacio Educa Sandbox');
-      
+
       // 2. Subir archivos
       const filesToPush = [];
       if (code.html) filesToPush.push({ path: 'index.html', content: code.html });
-      if (code.css) filesToPush.push({ path: 'style.css', content: code.css });
-      if (code.js) filesToPush.push({ path: 'script.js', content: code.js });
+      if (code.css)  filesToPush.push({ path: 'style.css',  content: code.css  });
+      if (code.js)   filesToPush.push({ path: 'script.js',  content: code.js   });
 
       await pushFiles(ghData.githubToken, repo.owner.login, repo.name, filesToPush);
 
-      toast.success('¡Proyecto subido a GitHub con éxito!', { id: toastId });
+      toast.dismiss(loadingToastId);
+      toast.custom((t) => (
+        <div className={`max-w-xs w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl dark:shadow-indigo-900/20 p-3 flex items-center gap-3 transition-all duration-300 relative overflow-hidden ${t.visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-4 scale-95 pointer-events-none'}`}>
+          <div className="relative flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-600 p-[2px] shadow-lg shadow-indigo-500/30">
+            <div className="w-full h-full bg-white dark:bg-slate-900 rounded-[10px] flex items-center justify-center">
+              <Github size={18} className="text-indigo-500" />
+            </div>
+            <div className="absolute -inset-1 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-xl blur opacity-30 -z-10" />
+          </div>
+          <div className="flex-1 min-w-0 pt-0.5">
+            <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight mb-0.5">¡Subido a GitHub!</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate flex items-center gap-1">
+              <ExternalLink size={9} /> {repo.html_url.replace('https://github.com/', '')}
+            </p>
+          </div>
+        </div>
+      ), { duration: 4000, position: 'top-right' });
+
       window.open(repo.html_url, '_blank');
     } catch (err) {
       console.error(err);
-      toast.error('Error al exportar a GitHub: ' + err.message, { id: toastId });
+      toast.dismiss(loadingToastId);
+      toast.custom((t) => (
+        <div className={`max-w-xs w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl dark:shadow-rose-900/20 p-3 flex items-center gap-3 transition-all duration-300 ${t.visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-4 scale-95 pointer-events-none'}`}>
+          <div className="relative flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-red-400 to-rose-600 p-[2px] shadow-lg shadow-rose-500/30">
+            <div className="w-full h-full bg-white dark:bg-slate-900 rounded-[10px] flex items-center justify-center">
+              <AlertCircle size={18} className="text-rose-500" />
+            </div>
+            <div className="absolute -inset-1 bg-gradient-to-br from-red-400 to-rose-600 rounded-xl blur opacity-30 -z-10" />
+          </div>
+          <div className="flex-1 min-w-0 pt-0.5">
+            <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight mb-0.5">Error al exportar</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{err.message}</p>
+          </div>
+        </div>
+      ), { duration: 4000, position: 'top-right' });
     } finally {
       setIsExporting(false);
     }
