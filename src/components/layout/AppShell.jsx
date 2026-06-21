@@ -144,7 +144,7 @@ export default function AppShell() {
                 >
                   <option value="" disabled hidden>Selecciona tu colegio</option>
                   <option value="María Inmaculada">María Inmaculada</option>
-                  <option value="Campo Rico">Campo Rico</option>
+                  <option value="Corazón de María">Corazón de María</option>
                 </select>
               </div>
               <div>
