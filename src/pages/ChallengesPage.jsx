@@ -324,10 +324,6 @@ function RetoCard({ reto, tipo, userId, userName }) {
               Expira en {tiempoRestante}
             </span>
             <span className="text-white/40">·</span>
-            <span className="text-white/70 text-xs">
-              Semana {reto.semana}{reto.dia ? ` · Día ${reto.dia}` : ''}
-            </span>
-            <span className="text-white/40">·</span>
             <span className="text-white/70 text-xs capitalize">
               {reto.nivel === 'basico' ? '🌱 Básico' : '🚀 Avanzado'}
             </span>
