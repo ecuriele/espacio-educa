@@ -15,6 +15,7 @@ import {
 import { addXp, recordDailyActivity, checkSubmissionAchievements } from '@store/slices/gamificationSlice';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@services/firebase/config';
+import toast from 'react-hot-toast';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import clsx from 'clsx';
@@ -63,10 +64,18 @@ function BotonEntregaManual({ lamina, leccion, modulo, user, isOffline }) {
   const handleEntregar = async () => {
     if (!userId) return setError('No se encontró tu sesión.');
 
+    // Validar fecha límite
+    if (modulo?.fechaLimite) {
+      const limite = new Date(modulo.fechaLimite + 'T23:59:59');
+      if (new Date() > limite) {
+        return setError('El plazo para entregar ha finalizado.');
+      }
+    }
+
     setEntregando(true);
     setError('');
     try {
-      await crearEntregaManual({
+      const syncPromise = crearEntregaManual({
         estudianteId:     userId,
         estudianteNombre: user.displayName || user.nombreMostrar || user.email || 'Estudiante',
         leccionId:        leccion.id,
@@ -75,6 +84,16 @@ function BotonEntregaManual({ lamina, leccion, modulo, user, isOffline }) {
         tareaId:          lamina.id,
         tareaTitulo:      lamina.nombre || 'Tarea Externa'
       });
+
+      if (isOffline) {
+        toast('Entregado offline. Se sincronizará apenas te conectes.', { icon: '📡', duration: 4000 });
+        syncPromise.then(() => {
+          toast.success('¡Tu entrega offline ha sido sincronizada con el servidor!');
+        }).catch(err => console.error(err));
+      } else {
+        await syncPromise;
+        toast.success('Entregado con éxito');
+      }
 
       if (!entregado) {
         dispatch(recordDailyActivity(userId));
@@ -151,15 +170,15 @@ function PopcodeEditor({ popcode, index, leccion, modulo, user, isOffline }) {
 
     if (modulo?.fechaLimite) {
       const limite = new Date(modulo.fechaLimite + 'T23:59:59');
-      if (new Date() > limite && isEdit) {
-        return setError('El plazo para editar esta entrega ha finalizado.');
+      if (new Date() > limite) {
+        return setError('El plazo para entregar ha finalizado.');
       }
     }
 
     setEntregando(true);
     setError('');
     try {
-      await crearEntrega({
+      const syncPromise = crearEntrega({
         estudianteId:     userId,
         estudianteNombre: user.displayName || user.nombreMostrar || user.email || 'Estudiante',
         leccionId:        leccion.id,
@@ -172,12 +191,21 @@ function PopcodeEditor({ popcode, index, leccion, modulo, user, isOffline }) {
         jsCode:           code.js,
       });
 
+      if (isOffline) {
+        toast('Guardado offline. Se sincronizará apenas te conectes.', { icon: '📡', duration: 4000 });
+        syncPromise.then(() => {
+          toast.success('¡Tu entrega offline de Popcode ha sido sincronizada!');
+        }).catch(err => console.error(err));
+      } else {
+        await syncPromise;
+        toast.success('Popcode entregado con éxito');
+      }
+
       if (!isEdit) {
         dispatch(recordDailyActivity(userId));
         dispatch(checkSubmissionAchievements(userId));
       }
 
-      // Firestore SDK guarda localmente si está offline y sincroniza automáticamente
       setEntregado(true);
       setIsEdit(true);
     } catch (err) {
