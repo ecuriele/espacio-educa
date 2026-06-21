@@ -7,8 +7,10 @@ import {
   Code2, FileUp, Video, Type, Loader2, CheckCircle2,
   ChevronUp, ChevronDown, Smartphone, Monitor, Zap,
   BookOpen, Terminal, Paperclip, Link2, Presentation,
-  ExternalLink, FileText, X, GripVertical,
+  ExternalLink, FileText, X, GripVertical, Search,
+  BookMarked, Download, FileSearch,
 } from 'lucide-react';
+import { LAMINAS_CATALOGO, LAMINAS_FLAT } from '@/data/laminas';
 import clsx from 'clsx';
 import {
   getModulo, getLeccion, createLeccion, updateLeccion, getLeccionesByModulo,
@@ -54,6 +56,7 @@ const BLOCK_TYPES = [
   { type: 'video',        label: 'Video',               icon: Video,        color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/30' },
   { type: 'recurso',      label: 'Recurso / Enlace',    icon: Link2,        color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/30' },
   { type: 'presentacion', label: 'Presentación',        icon: FileText,     color: 'text-pink-400',   bg: 'bg-pink-500/10   border-pink-500/30'   },
+  { type: 'lamina',       label: 'Lámina',              icon: BookMarked,   color: 'text-teal-400',   bg: 'bg-teal-500/10   border-teal-500/30'   },
   { type: 'code',         label: 'Reto de Código',      icon: Code2,        color: 'text-green-400',  bg: 'bg-green-500/10  border-green-500/30'  },
 ];
 
@@ -62,6 +65,7 @@ const EMPTY_BLOCK = {
   video:        () => ({ id: uid(), type: 'video',        url: '', titulo: '', descripcion: '' }),
   recurso:      () => ({ id: uid(), type: 'recurso',      url: '', nombre: '', descripcion: '', rutaFirebase: '' }),
   presentacion: () => ({ id: uid(), type: 'presentacion', url: '', titulo: '', descripcion: '' }),
+  lamina:       () => ({ id: uid(), type: 'lamina',       path: '', nombre: '', formato: 'pdf', tipoArchivo: 'lamina', temaLabel: '', nivelLabel: '' }),
   code:         () => ({ id: uid(), type: 'code', lenguaje: 'html', baseCode: `<!DOCTYPE html>\n<html>\n  <head>\n    <title>Popcode</title>\n  </head>\n  <body>\n    <!-- Programa aquí -->\n\n  </body>\n</html>`, cssCode: '', jsCode: '', instrucciones: '', esPopcode: true }),
 };
 
@@ -265,6 +269,218 @@ function PresentacionBlock({ block, onChange, ...rest }) {
   );
 }
 
+// ────────────────────────────────────────────────────
+// Modal selector de láminas
+// ────────────────────────────────────────────────────
+function LaminaSelectorModal({ onSelect, onClose }) {
+  const [nivel, setNivel]       = useState('basico');
+  const [temaId, setTemaId]     = useState(null);
+  const [query, setQuery]       = useState('');
+  const [tipoFiltro, setFiltro] = useState('todos'); // 'todos' | 'lamina' | 'tarea'
+
+  const nivelData = LAMINAS_CATALOGO[nivel];
+
+  // Filtrado: si hay búsqueda, busca en toda la lista plana; si no, filtra por tema
+  const resultados = query.trim().length >= 2
+    ? LAMINAS_FLAT.filter(a =>
+        a.nombre.toLowerCase().includes(query.toLowerCase()) &&
+        (tipoFiltro === 'todos' || a.tipo === tipoFiltro)
+      )
+    : (temaId
+        ? nivelData.temas.find(t => t.id === temaId)?.archivos.filter(
+            a => tipoFiltro === 'todos' || a.tipo === tipoFiltro
+          ) ?? []
+        : nivelData.temas.flatMap(t =>
+            t.archivos.filter(a => tipoFiltro === 'todos' || a.tipo === tipoFiltro)
+          )
+      );
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
+      <div className="bg-[#171A23] border border-white/10 rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col" style={{ maxHeight: '85vh' }}>
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 shrink-0">
+          <div className="flex items-center gap-2">
+            <BookMarked size={18} className="text-teal-400" />
+            <h2 className="text-white font-semibold">Seleccionar Lámina</h2>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/10 transition-all">
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Buscador + filtro tipo */}
+        <div className="px-5 py-3 border-b border-white/10 shrink-0 flex gap-2">
+          <div className="flex-1 relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <input
+              value={query}
+              onChange={e => { setQuery(e.target.value); setTemaId(null); }}
+              placeholder="Buscar lámina..."
+              className="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50"
+            />
+          </div>
+          <div className="flex items-center bg-white/5 border border-white/10 rounded-lg p-0.5 shrink-0">
+            {[['todos','Todos'],['lamina','Láminas'],['tarea','Tareas']].map(([v,l]) => (
+              <button key={v} onClick={() => setFiltro(v)}
+                className={clsx('px-2.5 py-1 rounded-md text-xs font-medium transition-all',
+                  tipoFiltro === v ? 'bg-teal-500 text-white' : 'text-slate-400 hover:text-white')}>
+                {l}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Tabs de nivel */}
+        <div className="flex gap-1 px-5 py-2 border-b border-white/10 shrink-0">
+          {Object.entries(LAMINAS_CATALOGO).map(([key, data]) => (
+            <button key={key}
+              onClick={() => { setNivel(key); setTemaId(null); setQuery(''); }}
+              className={clsx('px-3 py-1.5 rounded-lg text-xs font-semibold transition-all',
+                nivel === key && !query ? 'bg-teal-500 text-white' : 'text-slate-400 hover:text-white hover:bg-white/10')}>
+              {data.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex flex-1 overflow-hidden">
+          {/* Sidebar de temas (solo sin búsqueda activa) */}
+          {!query.trim() && (
+            <div className="w-44 shrink-0 border-r border-white/10 overflow-y-auto py-2">
+              <button
+                onClick={() => setTemaId(null)}
+                className={clsx('w-full text-left px-4 py-2 text-xs transition-colors',
+                  temaId === null ? 'text-teal-400 font-semibold bg-teal-500/10' : 'text-slate-400 hover:text-white hover:bg-white/5')}>
+                Todos los temas
+              </button>
+              {nivelData.temas.map(tema => (
+                <button key={tema.id}
+                  onClick={() => setTemaId(tema.id)}
+                  className={clsx('w-full text-left px-4 py-2 text-xs transition-colors flex items-center gap-2',
+                    temaId === tema.id ? 'text-teal-400 font-semibold bg-teal-500/10' : 'text-slate-400 hover:text-white hover:bg-white/5')}>
+                  <span>{tema.icon}</span>
+                  <span className="truncate">{tema.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Lista de archivos */}
+          <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+            {resultados.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+                <FileSearch size={32} className="mb-2 opacity-40" />
+                <p className="text-sm">No se encontraron archivos</p>
+              </div>
+            )}
+            {resultados.map(archivo => (
+              <button key={archivo.id}
+                onClick={() => onSelect(archivo)}
+                className="w-full flex items-center gap-3 p-3 rounded-xl bg-white/3 hover:bg-teal-500/15 border border-transparent hover:border-teal-500/30 text-left transition-all group">
+                <div className={clsx('w-9 h-9 rounded-lg flex items-center justify-center shrink-0 text-lg font-bold',
+                  archivo.tipo === 'tarea' ? 'bg-amber-500/15' : 'bg-teal-500/15')}>
+                  {archivo.formato === 'pdf' ? '📄' : '📝'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-slate-200 font-medium truncate group-hover:text-white">{archivo.nombre}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    <span className={clsx('mr-2 px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase',
+                      archivo.tipo === 'tarea' ? 'bg-amber-500/20 text-amber-400' : 'bg-teal-500/20 text-teal-400')}>
+                      {archivo.tipo}
+                    </span>
+                    {archivo.temaLabel || ''} · {archivo.formato?.toUpperCase()}
+                  </p>
+                </div>
+                <Plus size={14} className="text-teal-400 opacity-0 group-hover:opacity-100 shrink-0 transition-opacity" />
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────
+// Bloque de Lámina
+// ────────────────────────────────────────────────────
+function LaminaBlock({ block, onChange, ...rest }) {
+  const [showModal, setShowModal] = useState(!block.path);
+  const [showPreview, setShowPreview] = useState(false);
+
+  const handleSelect = (archivo) => {
+    onChange({
+      ...block,
+      path: archivo.path,
+      nombre: archivo.nombre,
+      formato: archivo.formato,
+      tipoArchivo: archivo.tipo,
+      temaLabel: archivo.temaLabel || '',
+      nivelLabel: archivo.nivelLabel || '',
+    });
+    setShowModal(false);
+  };
+
+  return (
+    <>
+      {showModal && <LaminaSelectorModal onSelect={handleSelect} onClose={() => setShowModal(false)} />}
+      <BlockWrapper {...rest} color="text-teal-400" bg="bg-teal-500/10 border-teal-500/30" icon={BookMarked} label="Lámina">
+        {block.path ? (
+          <div className="space-y-3">
+            {/* Info del archivo seleccionado */}
+            <div className="flex items-center gap-3 p-3 bg-teal-500/10 border border-teal-500/20 rounded-xl">
+              <div className="w-10 h-10 rounded-lg bg-teal-500/20 flex items-center justify-center text-xl shrink-0">
+                {block.formato === 'pdf' ? '📄' : '📝'}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-teal-300 truncate">{block.nombre}</p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {block.nivelLabel && <span className="mr-2">{block.nivelLabel}</span>}
+                  {block.temaLabel && <span className="mr-2">· {block.temaLabel}</span>}
+                  <span className={clsx('px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase',
+                    block.tipoArchivo === 'tarea' ? 'bg-amber-500/20 text-amber-400' : 'bg-teal-500/20 text-teal-400')}>
+                    {block.tipoArchivo || 'lámina'}
+                  </span>
+                </p>
+              </div>
+              <button onClick={() => setShowModal(true)}
+                className="px-2.5 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-all shrink-0">
+                Cambiar
+              </button>
+            </div>
+
+            {/* Preview toggle (solo PDF) */}
+            {block.formato === 'pdf' && (
+              <div>
+                <button onClick={() => setShowPreview(v => !v)}
+                  className="text-xs text-teal-400 hover:text-teal-300 flex items-center gap-1 transition-colors">
+                  <Eye size={12} /> {showPreview ? 'Ocultar preview' : 'Ver preview del PDF'}
+                </button>
+                {showPreview && (
+                  <div className="mt-2 rounded-xl overflow-hidden border border-teal-500/20" style={{ height: '420px' }}>
+                    <iframe src={block.path} className="w-full h-full" title={block.nombre} />
+                  </div>
+                )}
+              </div>
+            )}
+            {block.formato === 'docx' && (
+              <p className="text-xs text-amber-400/70">Los archivos Word se descargarán al hacer clic — no se pueden previsualizar en el navegador.</p>
+            )}
+          </div>
+        ) : (
+          <button onClick={() => setShowModal(true)}
+            className="w-full border-2 border-dashed border-teal-500/30 rounded-xl p-6 flex flex-col items-center gap-2 text-teal-400 hover:bg-teal-500/5 transition-all">
+            <BookMarked size={24} />
+            <span className="text-sm font-medium">Seleccionar lámina del catálogo</span>
+            <span className="text-xs text-slate-500">PDFs y tareas del curso Básico y Avanzado</span>
+          </button>
+        )}
+      </BlockWrapper>
+    </>
+  );
+}
+
 function CodeBlock({ block, onChange, ...rest }) {
   const [tab, setTab] = useState('instrucciones');
 
@@ -428,6 +644,31 @@ function StudentPreview({ title, bloques, previewMode }) {
                     </a>
                   );
                 }
+                if (b.type === 'lamina') {
+                  if (b.formato === 'pdf') return (
+                    <div key={b.id} className="space-y-1.5">
+                      <p className="text-sm font-semibold text-teal-300 flex items-center gap-1.5">
+                        <BookMarked size={13} className="text-teal-400" />{b.nombre}
+                      </p>
+                      {b.temaLabel && <p className="text-xs text-slate-500">{b.nivelLabel} · {b.temaLabel}</p>}
+                      <div className="rounded-lg overflow-hidden border border-teal-500/20" style={{ height: '480px' }}>
+                        <iframe src={b.path} className="w-full h-full" title={b.nombre} />
+                      </div>
+                    </div>
+                  );
+                  // DOCX: botón de descarga
+                  return (
+                    <a key={b.id} href={b.path} download
+                      className="flex items-center gap-3 p-3 bg-surface-card border border-amber-500/20 rounded-lg hover:border-amber-500/40 transition-all group">
+                      <span className="text-xl shrink-0">📝</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-200 truncate">{b.nombre}</p>
+                        <p className="text-xs text-amber-400/70 mt-0.5">Tarea · Descargar Word</p>
+                      </div>
+                      <Download size={13} className="text-slate-500 group-hover:text-amber-400 shrink-0 transition-colors" />
+                    </a>
+                  );
+                }
                 if (b.type === 'code') return (
                   <div key={b.id} className="bg-surface-card border border-green-500/20 rounded-lg p-3 space-y-2">
                     <p className="text-xs text-green-400 font-semibold flex items-center gap-1"><Zap size={10} />Reto de Código</p>
@@ -436,12 +677,33 @@ function StudentPreview({ title, bloques, previewMode }) {
                   </div>
                 );
                 return null;
-              })}
+              })
             </div>
           )}
           {tab === 'recursos' && (
             <div className="space-y-2">
-              {bloques.filter(b => b.type === 'recurso' || b.type === 'presentacion').map(b => {
+              {bloques.filter(b => b.type === 'recurso' || b.type === 'presentacion' || b.type === 'lamina').map(b => {
+                if (b.type === 'lamina') {
+                  const href = b.path || '#';
+                  const isDocx = b.formato === 'docx';
+                  return (
+                    <a key={b.id} href={href} download={isDocx || undefined} target={!isDocx ? '_blank' : undefined} rel="noopener noreferrer"
+                      className="flex items-start gap-3 p-3 bg-surface-card border border-teal-500/20 rounded-lg hover:border-teal-500/40 transition-all group">
+                      <span className="text-xl shrink-0 mt-0.5">{isDocx ? '📝' : '📄'}</span>
+                      <div className="min-w-0">
+                        <p className="text-sm text-slate-200 font-medium truncate">{b.nombre || 'Lámina'}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          <span className={clsx('mr-2 px-1 py-0.5 rounded text-[10px] font-semibold uppercase',
+                            b.tipoArchivo === 'tarea' ? 'bg-amber-500/20 text-amber-400' : 'bg-teal-500/20 text-teal-400')}>
+                            {b.tipoArchivo || 'lámina'}
+                          </span>
+                          {b.temaLabel}
+                        </p>
+                        <p className="text-xs text-slate-600 mt-1">{isDocx ? 'Descargar ↓' : 'Ver PDF ↗'}</p>
+                      </div>
+                    </a>
+                  );
+                }
                 const rtype = b.type === 'presentacion' ? 'pptx' : guessResourceType(b.url);
                 const ICONS = { pdf: '📄', pptx: '📊', doc: '📝', link: '🔗' };
                 return (
@@ -709,6 +971,7 @@ export default function LessonBuilderPage() {
               if (block.type === 'video')        return <VideoBlock        {...p} />;
               if (block.type === 'recurso')      return <RecursoBlock      {...p} />;
               if (block.type === 'presentacion') return <PresentacionBlock {...p} />;
+              if (block.type === 'lamina')       return <LaminaBlock       {...p} />;
               if (block.type === 'code')         return <CodeBlock         {...p} />;
               return null;
             })}

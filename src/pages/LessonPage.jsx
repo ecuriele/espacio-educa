@@ -6,7 +6,8 @@ import { selectCurrentUser, selectSessionMode } from '@store/slices/authSlice';
 import CodeEditor from '@components/editor/CodeEditor';
 import {
   BookOpen, Terminal, Paperclip, Send, VideoOff,
-  CheckCircle2, Loader2, FileText, ExternalLink, ChevronLeft, ChevronRight, AlertTriangle
+  CheckCircle2, Loader2, FileText, ExternalLink, ChevronLeft, ChevronRight, AlertTriangle,
+  BookMarked, Download,
 } from 'lucide-react';
 import {
   getModulo, getLeccion, getLeccionesByModulo, crearEntrega,
@@ -210,7 +211,7 @@ export default function LessonPage() {
   const bloques     = leccion?.bloques || [];
   const codeBlocks  = bloques.filter(b => b.type === 'code');
   // Recursos: solo desde bloques (ya no hay campo separado para evitar duplicados)
-  const recursos    = bloques.filter(b => b.type === 'recurso' || b.type === 'presentacion');
+  const recursos    = bloques.filter(b => b.type === 'recurso' || b.type === 'presentacion' || b.type === 'lamina');
   const hayEjercicio = codeBlocks.length > 0;
   const hayRecursos  = recursos.length > 0;
 
@@ -331,6 +332,39 @@ export default function LessonPage() {
                         {b.descripcion && <p className="text-xs text-slate-500 mt-0.5">{b.descripcion}</p>}
                       </div>
                       <ExternalLink size={13} className="text-slate-600 group-hover:text-brand-400 shrink-0" />
+                    </a>
+                  );
+                }
+
+                // Lámina (PDF offline o DOCX descargable)
+                if (b.type === 'lamina') {
+                  if (b.formato === 'pdf') return (
+                    <div key={b.id || bIdx} className="space-y-2">
+                      <p className="text-sm font-semibold text-teal-300 flex items-center gap-1.5">
+                        <BookMarked size={14} className="text-teal-400" />{b.nombre}
+                      </p>
+                      {b.temaLabel && (
+                        <p className="text-xs text-slate-500">{b.nivelLabel} · {b.temaLabel}</p>
+                      )}
+                      <div className="rounded-xl overflow-hidden border border-teal-500/20" style={{ height: '520px' }}>
+                        <iframe
+                          src={b.path}
+                          className="w-full h-full"
+                          title={b.nombre}
+                        />
+                      </div>
+                    </div>
+                  );
+                  // DOCX — descarga directa
+                  return (
+                    <a key={b.id || bIdx} href={b.path} download
+                      className="flex items-center gap-3 p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl hover:border-amber-500/40 transition-all group">
+                      <span className="text-2xl shrink-0">📝</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-slate-200 truncate">{b.nombre}</p>
+                        <p className="text-xs text-amber-400/70 mt-0.5">Tarea · Archivo Word · Haz clic para descargar</p>
+                      </div>
+                      <Download size={16} className="text-slate-500 group-hover:text-amber-400 shrink-0 transition-colors" />
                     </a>
                   );
                 }

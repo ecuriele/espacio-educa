@@ -14,10 +14,10 @@ export default defineConfig({
       // Estrategia de caché: generateSW usa Workbox para generar el SW automáticamente
       strategies: 'generateSW',
       workbox: {
-        // Caché de activos del build (JS, CSS, HTML, imágenes, fuentes)
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        // Tamaño máximo de archivo a cachear (5 MB)
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        // Caché de activos del build (JS, CSS, HTML, imágenes, fuentes, PDFs, DOCXs)
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,pdf,docx}'],
+        // Tamaño máximo de archivo a cachear (10 MB para acomodar los PDFs de láminas)
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
         // Runtime caching: estrategias para recursos dinámicos
         runtimeCaching: [
           {
@@ -82,6 +82,16 @@ export default defineConfig({
             options: {
               cacheName: 'firebase-auth-cache',
               networkTimeoutSeconds: 5,
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            // CacheFirst para láminas del curso (PDFs/DOCXs en public/laminas/) — offline completo
+            urlPattern: /\/laminas\/.+/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'laminas-offline',
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 365 }, // 1 año
               cacheableResponse: { statuses: [0, 200] },
             },
           },

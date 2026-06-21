@@ -37,6 +37,21 @@ registerRoute(
   })
 );
 
+// ── Láminas offline: PDFs y DOCXs del curso (CacheFirst, 1 año) ──────────────
+registerRoute(
+  ({ url }) => url.pathname.startsWith('/laminas/'),
+  new CacheFirst({
+    cacheName: 'laminas-offline',
+    plugins: [
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
+      new ExpirationPlugin({
+        maxEntries: 200,
+        maxAgeSeconds: 60 * 60 * 24 * 365, // 1 año
+      }),
+    ],
+  })
+);
+
 
 /** Plugin para sincronizar actualizaciones de progreso */
 const progressSyncPlugin = new BackgroundSyncPlugin('progress-sync-queue', {
