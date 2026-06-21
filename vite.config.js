@@ -99,6 +99,7 @@ export default defineConfig({
         // Background Sync para subir evaluaciones y progreso offline
         // Se configura en el SW personalizado (src/sw-custom.js)
         navigateFallback: 'index.html',
+        navigateFallbackDenylist: [/^\/laminas\//],
         cleanupOutdatedCaches: true,
       },
       manifest: {
