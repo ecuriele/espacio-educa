@@ -744,7 +744,6 @@ export default function LessonBuilderPage() {
 
   const [modulo, setModulo]               = useState(null);
   const [title,  setTitle]                = useState('');
-  const [xpReward, setXpReward]           = useState(50);
   const [order,  setOrder]                = useState(1);
   const [bloques, setBloques]             = useState([EMPTY_BLOCK.text()]);
   const [saving,  setSaving]              = useState(false);
@@ -785,7 +784,6 @@ export default function LessonBuilderPage() {
           const lec = await getLeccion(leccionId);
           if (lec) {
             setTitle(lec.title || '');
-            setXpReward(lec.xpReward || 50);
             setOrder(lec.order || 1);
             if (lec.bloques?.length > 0) setBloques(lec.bloques);
             else if (lec.content)         setBloques([{ id: uid(), type: 'text', content: lec.content }]);
@@ -822,7 +820,6 @@ export default function LessonBuilderPage() {
       const firstText = bloques.find(b => b.type === 'text');
       const payload = {
         title: title.trim(),
-        xpReward: Number(xpReward) || 50,
         order:    Number(order)    || 1,
         bloques,
         content:  firstText?.content || '',
@@ -884,12 +881,6 @@ export default function LessonBuilderPage() {
         <div className="flex items-center gap-2 shrink-0">
           {/* XP + Orden */}
           <div className="hidden sm:flex items-center gap-2">
-            <div className="flex items-center gap-1.5 bg-surface-hover rounded-lg px-2 py-1">
-              <Zap size={12} className="text-yellow-400" />
-              <input type="number" value={xpReward} min={5} step={5} onChange={e => setXpReward(Number(e.target.value))}
-                className="w-10 bg-transparent text-yellow-400 text-xs font-semibold focus:outline-none" />
-              <span className="text-xs text-slate-500">XP</span>
-            </div>
             <div className="flex items-center gap-1 bg-surface-hover rounded-lg px-2 py-1">
               <span className="text-xs text-slate-500">#</span>
               <input type="number" value={order} min={1} onChange={e => setOrder(Number(e.target.value))}

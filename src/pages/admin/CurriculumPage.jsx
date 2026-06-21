@@ -207,7 +207,6 @@ function CourseRow({ course, onEdit, onDelete }) {
                       ? lesson.creadoEn.toDate().toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) 
                       : (lesson.creadoEn ? new Date(lesson.creadoEn).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : 'Hoy')}
                   </span>
-                  <span className="text-xs text-amber-500 font-medium">{lesson.xpReward ?? 0}xp</span>
                   <Link
                     to={`/admin/builder/${course.id}?leccionId=${lesson.id}`}
                     className="flex items-center gap-1 p-1 px-2 text-xs text-blue-400 hover:text-white hover:bg-blue-500 rounded-lg transition-all border border-blue-500/30"
