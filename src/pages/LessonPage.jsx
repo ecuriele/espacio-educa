@@ -77,7 +77,6 @@ function BotonEntregaManual({ lamina, leccion, modulo, user, isOffline }) {
       });
 
       if (!entregado) {
-        dispatch(addXp({ userId, amount: 20, reason: 'Tarea externa reportada' }));
         dispatch(recordDailyActivity(userId));
         dispatch(checkSubmissionAchievements(userId));
       }
@@ -174,7 +173,6 @@ function PopcodeEditor({ popcode, index, leccion, modulo, user, isOffline }) {
       });
 
       if (!isEdit) {
-        dispatch(addXp({ userId, amount: 50, reason: 'Popcode entregado' }));
         dispatch(recordDailyActivity(userId));
         dispatch(checkSubmissionAchievements(userId));
       }
