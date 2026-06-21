@@ -113,8 +113,8 @@ function BotonEntregaManual({ lamina, leccion, modulo, user, isOffline }) {
     <div className="mt-3 flex flex-col gap-2">
       {error && <span className="text-red-400 text-xs">{error}</span>}
       {entregado ? (
-        <div className="flex items-center justify-center gap-2 px-4 py-2.5 bg-green-500/10 border border-green-500/20 text-green-400 rounded-xl text-sm font-semibold w-full">
-          <CheckCircle2 size={16} /> Entregado
+        <div className={clsx("flex items-center justify-center gap-2 px-4 py-2.5 border rounded-xl text-sm font-semibold w-full transition-all", isOffline ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-green-500/10 border-green-500/20 text-green-400")}>
+          <CheckCircle2 size={16} /> {isOffline ? 'Guardado Local (Offline)' : 'Entregado'}
         </div>
       ) : (
         <button
@@ -258,10 +258,10 @@ function PopcodeEditor({ popcode, index, leccion, modulo, user, isOffline }) {
         <div className="flex items-center justify-end">
           {entregado ? (
             <div className="flex flex-col items-end gap-1">
-              <div className="flex items-center gap-2 px-5 py-2.5 bg-green-500/20 border border-green-500/30 text-green-400 rounded-xl text-sm font-semibold">
-                <CheckCircle2 size={16} /> ¡Entregado!
+              <div className={clsx("flex items-center gap-2 px-5 py-2.5 border rounded-xl text-sm font-semibold transition-all", isOffline ? "bg-amber-500/10 border-amber-500/30 text-amber-400" : "bg-green-500/20 border-green-500/30 text-green-400")}>
+                <CheckCircle2 size={16} /> {isOffline ? '¡Guardado Localmente!' : '¡Entregado!'}
               </div>
-              {isOffline && <span className="text-xs text-amber-400">Se sincronizará al reconectarse</span>}
+              {isOffline && <span className="text-xs text-amber-400">Se enviará al conectarse a internet</span>}
             </div>
           ) : (
             <button
