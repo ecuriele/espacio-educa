@@ -26,11 +26,7 @@ const CAROUSEL_SLIDES = [
     title: 'Feria de proyectos',
     subtitle: 'Nuestros estudiantes presentan sus creaciones al mundo.',
   },
-  {
-    image: '/carrusel/foto10.jpg',
-    title: 'Aprendizaje que transforma',
-    subtitle: 'Cada clase es una oportunidad de crecer y crear.',
-  },
+
   {
     image: '/carrusel/foto1.jpg',
     title: 'Visita a la Universidad Metropolitana',
