@@ -434,6 +434,33 @@ export async function crearEntrega({ estudianteId, estudianteNombre, leccionId, 
   return entregaId;
 }
 
+/**
+ * Guarda el reporte de entrega de una tarea manual/externa por un estudiante.
+ */
+export async function crearEntregaManual({ estudianteId, estudianteNombre, leccionId, leccionTitulo, moduloId, tareaId, tareaTitulo }) {
+  const entregaId = `${estudianteId}_${leccionId}_${tareaId}`;
+  const ref = doc(db, 'entregas', entregaId);
+
+  await setDoc(ref, {
+    estudianteId,
+    estudianteNombre,
+    leccionId,
+    leccionTitulo,
+    moduloId,
+    tareaId,
+    tareaTitulo,
+    revisado: false,
+    calificacion: null,
+    comentarioProfesor: '',
+    actualizadoEn: serverTimestamp(),
+    entregadoEn: serverTimestamp(),
+    tipo: 'manual',
+    ediciones: firestoreIncrement(1)
+  }, { merge: true });
+
+  return entregaId;
+}
+
 export async function getUserSubmissionCount(userId) {
   let total = 0;
   try {
@@ -575,11 +602,11 @@ export async function getProgresoPorModulo(estudianteId) {
     const snapshot = await getDocs(q);
     const progreso = {};
     snapshot.docs.forEach((d) => {
-      const { moduloId, leccionId, popcodeIndex } = d.data();
+      const { moduloId, leccionId, popcodeIndex, tareaId } = d.data();
       if (!moduloId || !leccionId) return;
       if (!progreso[moduloId]) progreso[moduloId] = new Set();
-      // Contar cada Popcode como una entrega única en este módulo
-      progreso[moduloId].add(`${leccionId}_${popcodeIndex ?? 0}`);
+      // Contar cada Popcode o Tarea Manual como una entrega única en este módulo
+      progreso[moduloId].add(`${leccionId}_${popcodeIndex ?? tareaId ?? 0}`);
     });
     // Convertir Set → número (count)
     const result = {};

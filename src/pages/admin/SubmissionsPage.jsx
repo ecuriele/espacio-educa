@@ -224,7 +224,9 @@ function EntregaCard({ entrega, atrasada }) {
     ? '🖥 Editor Libre'
     : entrega.tipo === 'sandbox'
       ? '🧪 Sandbox'
-      : `💻 Popcode ${(entrega.popcodeIndex ?? 0) + 1}`;
+      : entrega.tipo === 'manual'
+        ? '📝 Tarea Externa'
+        : `💻 Popcode ${(entrega.popcodeIndex ?? 0) + 1}`;
 
   const handleGuardar = async () => {
     // Validar que la nota esté en el rango 0-20
@@ -308,24 +310,39 @@ function EntregaCard({ entrega, atrasada }) {
       {expanded && (
         <div className="px-4 pb-4 space-y-3 border-t border-surface-border pt-3">
 
-          {/* Instrucciones del popcode si las tiene */}
+          {/* Instrucciones del popcode/tarea si las tiene */}
           {entrega.popcodeTitulo && (
             <p className="text-xs text-slate-500 italic">"{entrega.popcodeTitulo}"</p>
           )}
+          {entrega.tareaTitulo && (
+            <p className="text-xs text-slate-500 italic">"{entrega.tareaTitulo}"</p>
+          )}
 
-          {/* Toggle código / preview */}
-          <button onClick={() => setShowCode(v => !v)}
-            className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors">
-            {showCode ? <EyeOff size={13} /> : <Eye size={13} />}
-            {showCode ? 'Ocultar código y preview' : 'Ver código y preview'}
-          </button>
+          {entrega.tipo === 'manual' ? (
+            <div className="bg-surface-hover border border-surface-border p-4 rounded-xl flex items-start gap-3">
+              <FileText className="text-slate-400 mt-0.5 shrink-0" size={18} />
+              <div>
+                <p className="text-sm font-semibold text-slate-200">Entrega Física / Externa</p>
+                <p className="text-xs text-slate-400 mt-1">El estudiante indicó que entregó esta tarea de forma física o por otro medio. Por favor, revisa el trabajo y asígnale una calificación aquí.</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Toggle código / preview */}
+              <button onClick={() => setShowCode(v => !v)}
+                className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors">
+                {showCode ? <EyeOff size={13} /> : <Eye size={13} />}
+                {showCode ? 'Ocultar código y preview' : 'Ver código y preview'}
+              </button>
 
-          {showCode && (
-            <CodeViewer
-              html={entrega.htmlCode}
-              css={entrega.cssCode}
-              js={entrega.jsCode}
-            />
+              {showCode && (
+                <CodeViewer
+                  html={entrega.htmlCode}
+                  css={entrega.cssCode}
+                  js={entrega.jsCode}
+                />
+              )}
+            </>
           )}
 
           <div className="space-y-2 pt-1">

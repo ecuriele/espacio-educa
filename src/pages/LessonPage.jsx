@@ -10,7 +10,7 @@ import {
   BookMarked, Download,
 } from 'lucide-react';
 import {
-  getModulo, getLeccion, getLeccionesByModulo, crearEntrega,
+  getModulo, getLeccion, getLeccionesByModulo, crearEntrega, crearEntregaManual
 } from '@services/firebase/firestoreService';
 import { addXp, recordDailyActivity, checkSubmissionAchievements } from '@store/slices/gamificationSlice';
 import { doc, getDoc } from 'firebase/firestore';
@@ -33,6 +33,84 @@ function toPresentacionEmbed(url) {
   const gSlides = url.match(/docs\.google\.com\/presentation\/d\/([^/]+)/);
   if (gSlides) return `https://docs.google.com/presentation/d/${gSlides[1]}/embed?start=false&loop=false&delayms=3000`;
   return url;
+}
+
+function BotonEntregaManual({ lamina, leccion, modulo, user, isOffline }) {
+  const [entregando, setEntregando] = useState(false);
+  const [entregado, setEntregado]   = useState(false);
+  const [error, setError]           = useState('');
+  const dispatch = useDispatch();
+
+  const userId = user?.uid || user?.id;
+
+  // Cargar estado de entrega
+  useEffect(() => {
+    if (!userId || isOffline || !leccion?.id || !lamina?.id) return;
+    const fetchEntrega = async () => {
+      try {
+        const ref = doc(db, 'entregas', `${userId}_${leccion.id}_${lamina.id}`);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          setEntregado(true);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchEntrega();
+  }, [userId, leccion?.id, lamina?.id, isOffline]);
+
+  const handleEntregar = async () => {
+    if (!userId) return setError('No se encontró tu sesión.');
+
+    setEntregando(true);
+    setError('');
+    try {
+      await crearEntregaManual({
+        estudianteId:     userId,
+        estudianteNombre: user.displayName || user.nombreMostrar || user.email || 'Estudiante',
+        leccionId:        leccion.id,
+        leccionTitulo:    leccion.title || 'Sin título',
+        moduloId:         modulo?.id || '',
+        tareaId:          lamina.id,
+        tareaTitulo:      lamina.nombre || 'Tarea Externa'
+      });
+
+      if (!entregado) {
+        dispatch(addXp({ userId, amount: 20, reason: 'Tarea externa reportada' }));
+        dispatch(recordDailyActivity(userId));
+        dispatch(checkSubmissionAchievements(userId));
+      }
+
+      setEntregado(true);
+    } catch (err) {
+      console.error(err);
+      setError('Error inesperado.');
+    } finally {
+      setEntregando(false);
+    }
+  };
+
+  return (
+    <div className="mt-3 flex flex-col gap-2">
+      {error && <span className="text-red-400 text-xs">{error}</span>}
+      {entregado ? (
+        <div className="flex items-center justify-center gap-2 px-4 py-2.5 bg-green-500/10 border border-green-500/20 text-green-400 rounded-xl text-sm font-semibold w-full">
+          <CheckCircle2 size={16} /> Entregado
+        </div>
+      ) : (
+        <button
+          onClick={handleEntregar}
+          disabled={entregando}
+          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-surface-hover hover:bg-surface-border border border-surface-border text-slate-200 font-semibold rounded-xl text-sm transition-all w-full"
+        >
+          {entregando ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+          {entregando ? 'Marcando...' : 'Marcar como entregado (Físicamente / Externo)'}
+        </button>
+      )}
+      {isOffline && !entregado && <span className="text-amber-400 text-[10px] text-center">Se sincronizará al tener red</span>}
+    </div>
+  );
 }
 
 function PopcodeEditor({ popcode, index, leccion, modulo, user, isOffline }) {
@@ -357,15 +435,18 @@ export default function LessonPage() {
                   );
                   // DOCX — descarga directa
                   return (
-                    <a key={b.id || bIdx} href={b.path} download
-                      className="flex items-center gap-3 p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl hover:border-amber-500/40 transition-all group">
-                      <span className="text-2xl shrink-0">📝</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-200 truncate">{b.nombre}</p>
-                        <p className="text-xs text-amber-400/70 mt-0.5">Tarea · Archivo Word · Haz clic para descargar</p>
-                      </div>
-                      <Download size={16} className="text-slate-500 group-hover:text-amber-400 shrink-0 transition-colors" />
-                    </a>
+                    <div key={b.id || bIdx} className="bg-surface-card border border-surface-border rounded-xl p-4">
+                      <a href={b.path} download
+                        className="flex items-center gap-3 p-3 bg-amber-500/5 border border-amber-500/20 rounded-xl hover:border-amber-500/40 transition-all group">
+                        <span className="text-2xl shrink-0">📝</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-slate-200 truncate">{b.nombre}</p>
+                          <p className="text-xs text-amber-400/70 mt-0.5">Tarea · Archivo Word · Haz clic para descargar</p>
+                        </div>
+                        <Download size={16} className="text-slate-500 group-hover:text-amber-400 shrink-0 transition-colors" />
+                      </a>
+                      <BotonEntregaManual lamina={b} leccion={leccion} modulo={modulo} user={user} isOffline={isOffline} />
+                    </div>
                   );
                 }
 
