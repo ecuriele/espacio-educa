@@ -677,7 +677,7 @@ function StudentPreview({ title, bloques, previewMode }) {
                   </div>
                 );
                 return null;
-              })
+              })}
             </div>
           )}
           {tab === 'recursos' && (
