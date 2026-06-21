@@ -1,251 +1,127 @@
-import React, { useState, useMemo } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { selectCurrentUser } from '@store/slices/authSlice';
+import { addXp } from '@store/slices/gamificationSlice';
+import { crearEntrega, incrementUserXp } from '@services/firebase/firestoreService';
+import { RETOS_BASICO, RETOS_AVANZADO } from '../data/retos';
+import CodeEditor from '@components/editor/CodeEditor';
+import toast from 'react-hot-toast';
 import {
-  RETOS_BASICO,
-  RETOS_AVANZADO,
-  getRetoDiarioHoy,
-  getRetoSemanalActual,
-} from '../data/retos';
-import {
-  Zap,
-  Calendar,
-  Trophy,
-  Star,
-  Code2,
-  ChevronRight,
-  ChevronDown,
-  Flame,
-  BookOpen,
-  Clock,
-  CheckCircle2,
-  Copy,
-  Check,
-  Tag,
-  ArrowRight,
-  Sparkles,
-  LayoutGrid,
-  List,
+  Zap, Trophy, Flame, Star, CheckCircle2, Send,
+  ChevronDown, ChevronUp, Clock, List, Sparkles,
+  RotateCcw, BookOpen, AlertTriangle,
 } from 'lucide-react';
 
-// ─── Paleta por nivel ───────────────────────────────────────────────────────
-const NIVEL_META = {
-  basico: {
-    label: 'Básico',
-    sublabel: 'HTML · CSS · JavaScript',
-    gradient: 'from-teal-500 to-cyan-400',
-    badgeBg: 'bg-teal-500/10 dark:bg-teal-500/15',
-    badgeText: 'text-teal-600 dark:text-teal-400',
-    badgeBorder: 'border-teal-500/30',
-    ring: 'ring-teal-500/30',
-    glowCard: 'hover:border-teal-500/40 dark:hover:border-teal-500/30',
-    dot: 'bg-teal-400',
-  },
-  avanzado: {
-    label: 'Avanzado',
-    sublabel: 'POO · JS Avanzado',
-    gradient: 'from-violet-500 to-purple-400',
-    badgeBg: 'bg-violet-500/10 dark:bg-violet-500/15',
-    badgeText: 'text-violet-600 dark:text-violet-400',
-    badgeBorder: 'border-violet-500/30',
-    ring: 'ring-violet-500/30',
-    glowCard: 'hover:border-violet-500/40 dark:hover:border-violet-500/30',
-    dot: 'bg-violet-400',
-  },
-};
-
-// ─── Paleta por tipo de reto ────────────────────────────────────────────────
-const TIPO_META = {
-  diario: {
-    label: 'Diario',
-    icon: <Flame size={13} />,
-    bg: 'bg-warning-500/10',
-    text: 'text-warning-500',
-    border: 'border-warning-500/30',
-  },
-  semanal: {
-    label: 'Semanal',
-    icon: <Trophy size={13} />,
-    bg: 'bg-accent-500/10',
-    text: 'text-accent-500',
-    border: 'border-accent-500/30',
-  },
-};
-
-// ─── Helpers ────────────────────────────────────────────────────────────────
-function NivelBadge({ nivel }) {
-  const m = NIVEL_META[nivel];
-  return (
-    <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${m.badgeBg} ${m.badgeText} ${m.badgeBorder}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${m.dot}`} />
-      {m.label}
-    </span>
-  );
+// ─── Obtener reto del día / semana ──────────────────────────────────────────
+function getDayOfYear() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 0);
+  return Math.floor((now - start) / 86400000);
 }
 
-function TipoBadge({ tipo }) {
-  const m = TIPO_META[tipo];
-  return (
-    <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${m.bg} ${m.text} ${m.border}`}>
-      {m.icon}
-      {m.label}
-    </span>
-  );
+function getWeekOfYear() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 1);
+  return Math.ceil(((now - start) / 86400000 + start.getDay() + 1) / 7);
 }
 
-function XpBadge({ xp }) {
-  return (
-    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-300 border border-brand-500/20">
-      <Star size={11} />
-      {xp} XP
-    </span>
-  );
+function getRetoDiario(nivel) {
+  const pool = (nivel === 'avanzado' ? RETOS_AVANZADO : RETOS_BASICO)
+    .filter(r => r.tipo === 'diario');
+  return pool[getDayOfYear() % pool.length];
 }
 
-// ─── Botón de copiar código ─────────────────────────────────────────────────
-function CopyButton({ text }) {
-  const [copied, setCopied] = useState(false);
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
-    } catch {}
-  };
-  return (
-    <button
-      onClick={handleCopy}
-      className="absolute top-3 right-3 p-1.5 rounded-lg bg-slate-700/60 hover:bg-slate-600/80 text-slate-300 hover:text-white transition-all"
-      title="Copiar código"
-    >
-      {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
-    </button>
-  );
+function getRetoSemanal(nivel) {
+  const pool = (nivel === 'avanzado' ? RETOS_AVANZADO : RETOS_BASICO)
+    .filter(r => r.tipo === 'semanal');
+  return pool[getWeekOfYear() % pool.length];
 }
 
-// ─── Tarjeta de reto expandible ─────────────────────────────────────────────
-function RetoCard({ reto, destacado = false }) {
-  const [abierto, setAbierto] = useState(destacado);
-  const nivel = NIVEL_META[reto.nivel];
+// ─── Helpers de tiempo ───────────────────────────────────────────────────────
+function tiempoRestanteDiario() {
+  const now = new Date();
+  const fin = new Date(now);
+  fin.setHours(23, 59, 59, 999);
+  const diff = fin - now;
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  return `${h}h ${m}m`;
+}
 
+function tiempoRestanteSemanal() {
+  const now = new Date();
+  const fin = new Date(now);
+  const diasHastaDomingo = 7 - now.getDay();
+  fin.setDate(now.getDate() + diasHastaDomingo);
+  fin.setHours(23, 59, 59, 999);
+  const diff = fin - now;
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  return `${d}d ${h}h`;
+}
+
+// ─── Panel expandible de instrucciones ──────────────────────────────────────
+function InstruccionesPanel({ reto, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen);
   return (
-    <div
-      className={`
-        bg-white dark:bg-surface-card border rounded-2xl transition-all duration-200 shadow-sm dark:shadow-none
-        ${destacado ? `border-2 ${reto.nivel === 'basico' ? 'border-teal-500/50' : 'border-violet-500/50'} dark:shadow-lg` : 'border-slate-200 dark:border-surface-border'}
-        ${nivel.glowCard}
-        hover:shadow-md dark:hover:shadow-brand-md
-      `}
-    >
-      {/* Cabecera siempre visible */}
+    <div className="bg-slate-50 dark:bg-surface-dark border border-slate-200 dark:border-surface-border rounded-xl overflow-hidden">
       <button
-        className="w-full text-left p-5 flex items-start gap-4"
-        onClick={() => setAbierto(v => !v)}
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-surface-hover transition-colors"
       >
-        {/* Icono de tipo */}
-        <div className={`flex-shrink-0 mt-0.5 w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br ${nivel.gradient} text-white shadow-md`}>
-          {reto.tipo === 'diario' ? <Flame size={18} /> : <Trophy size={18} />}
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
-            <TipoBadge tipo={reto.tipo} />
-            <NivelBadge nivel={reto.nivel} />
-            <XpBadge xp={reto.xp} />
-            {destacado && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-warning-500/15 text-warning-500 border border-warning-500/30">
-                <Sparkles size={11} /> Hoy
-              </span>
-            )}
-          </div>
-          <h3 className="font-bold text-slate-900 dark:text-white text-sm leading-snug">
-            {reto.titulo}
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
-            {reto.descripcion}
-          </p>
-
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            {reto.etiquetas.map(tag => (
-              <span key={tag} className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-surface-hover text-slate-500 dark:text-slate-400">
-                <Tag size={8} /> {tag}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div className={`flex-shrink-0 mt-1 transition-transform duration-200 text-slate-400 ${abierto ? 'rotate-0' : '-rotate-90'}`}>
-          <ChevronDown size={18} />
-        </div>
+        <span className="flex items-center gap-2">
+          <List size={15} />
+          Instrucciones y criterios
+        </span>
+        {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
       </button>
 
-      {/* Contenido expandible */}
-      {abierto && (
-        <div className="px-5 pb-5 space-y-4 border-t border-slate-100 dark:border-surface-border pt-4">
-          {/* Descripción completa */}
-          <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+      {open && (
+        <div className="px-4 pb-4 space-y-4 border-t border-slate-200 dark:border-surface-border">
+          {/* Descripción */}
+          <p className="text-sm text-slate-600 dark:text-slate-300 mt-3 leading-relaxed">
             {reto.descripcion}
           </p>
 
           {/* Instrucciones */}
           <div>
-            <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <List size={12} /> Instrucciones
-            </h4>
-            <ol className="space-y-1.5">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+              Qué hacer
+            </p>
+            <ol className="space-y-2">
               {reto.instrucciones.map((inst, i) => (
-                <li key={i} className="flex gap-2 text-sm text-slate-700 dark:text-slate-300">
-                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center text-[11px] font-bold mt-0.5">
+                <li key={i} className="flex gap-2.5 text-sm text-slate-700 dark:text-slate-300">
+                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-[#ea5837]/10 text-[#ea5837] flex items-center justify-center text-[11px] font-bold mt-0.5">
                     {i + 1}
                   </span>
-                  <span>{inst}</span>
+                  {inst}
                 </li>
               ))}
             </ol>
           </div>
 
-          {/* Criterios de evaluación */}
+          {/* Criterios */}
           <div>
-            <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <CheckCircle2 size={12} /> Criterios de evaluación
-            </h4>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+              Criterios de evaluación
+            </p>
             <ul className="space-y-1.5">
-              {reto.criterios.map((crit, i) => (
-                <li key={i} className="flex gap-2 text-sm text-slate-700 dark:text-slate-300">
-                  <CheckCircle2 size={15} className="flex-shrink-0 mt-0.5 text-green-500 dark:text-green-400" />
-                  <span>{crit}</span>
+              {reto.criterios.map((c, i) => (
+                <li key={i} className="flex gap-2 text-sm text-slate-600 dark:text-slate-400">
+                  <CheckCircle2 size={15} className="flex-shrink-0 mt-0.5 text-green-500" />
+                  {c}
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Código inicial si aplica */}
-          {reto.codigo_inicial && (
-            <div>
-              <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <Code2 size={12} /> Código de partida
-              </h4>
-              <div className="relative">
-                <pre className="bg-slate-900 dark:bg-[#0d0f1a] text-slate-200 text-xs rounded-xl p-4 overflow-x-auto leading-relaxed font-mono border border-slate-700/50 max-h-72">
-                  <code>{reto.codigo_inicial}</code>
-                </pre>
-                <CopyButton text={reto.codigo_inicial} />
-              </div>
-            </div>
-          )}
-
-          {/* Footer */}
-          <div className="flex items-center justify-between pt-2">
-            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-              <Clock size={12} />
-              <span>Semana {reto.semana}{reto.dia ? ` · Día ${reto.dia}` : ''}</span>
-              <span>·</span>
-              <span className="capitalize">{reto.tipo_entrega === 'codigo' ? '🖥 Código' : reto.tipo_entrega === 'captura' ? '📸 Captura' : '🔗 URL'}</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs font-bold text-brand-600 dark:text-brand-400">
-              <Star size={13} />
-              {reto.xp} XP al completar
-            </div>
+          {/* Etiquetas */}
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {reto.etiquetas.map(tag => (
+              <span key={tag} className="text-[10px] px-2 py-0.5 rounded-md bg-slate-200 dark:bg-surface-hover text-slate-500 dark:text-slate-400 font-medium">
+                {tag}
+              </span>
+            ))}
           </div>
         </div>
       )}
@@ -253,237 +129,325 @@ function RetoCard({ reto, destacado = false }) {
   );
 }
 
-// ─── Sección "Reto de hoy" ──────────────────────────────────────────────────
-function RetosDeHoySection({ nivel }) {
-  const retoDiario = getRetoDiarioHoy(nivel);
-  const retoSemanal = getRetoSemanalActual(nivel);
-  const m = NIVEL_META[nivel];
+// ─── Bloque de un reto con editor integrado ──────────────────────────────────
+function RetoConEditor({ reto, tipo, userId, userName, onEntregado }) {
+  const dispatch = useDispatch();
 
-  return (
-    <div className="space-y-4">
-      <div className={`relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br ${m.gradient}`}>
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 80% 20%, white 0%, transparent 60%)' }} />
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-1">
-            <Sparkles size={16} className="text-white/80" />
-            <span className="text-white/80 text-xs font-semibold uppercase tracking-wider">Retos de hoy</span>
+  // Estado del editor
+  const [code, setCode] = useState(() => {
+    const base = reto.codigo_inicial || '';
+    // Detectar si es HTML completo o solo JS
+    const esHTML = base.trimStart().startsWith('<!DOCTYPE') || base.trimStart().startsWith('<');
+    if (esHTML) {
+      return { html: base, css: '', js: '' };
+    }
+    return { html: '', css: '', js: base };
+  });
+
+  const [editorKey, setEditorKey] = useState('initial');
+  const [enviando, setEnviando] = useState(false);
+  const [entregado, setEntregado] = useState(false);
+
+  const handleCodeChange = useCallback((lang, value) => {
+    setCode(prev => ({ ...prev, [lang]: value }));
+  }, []);
+
+  const handleReset = () => {
+    const base = reto.codigo_inicial || '';
+    const esHTML = base.trimStart().startsWith('<!DOCTYPE') || base.trimStart().startsWith('<');
+    setCode(esHTML ? { html: base, css: '', js: '' } : { html: '', css: '', js: base });
+    setEditorKey(Date.now().toString());
+  };
+
+  const handleEntregar = async () => {
+    if (!userId) {
+      toast.error('Debes iniciar sesión para entregar');
+      return;
+    }
+    if (enviando) return;
+
+    // Verificar que hay algo escrito
+    const hayContenido = code.html.trim() || code.css.trim() || code.js.trim();
+    if (!hayContenido) {
+      toast.error('Escribe algo antes de entregar 😊');
+      return;
+    }
+
+    setEnviando(true);
+    try {
+      await crearEntrega({
+        estudianteId: userId,
+        estudianteNombre: userName || 'Estudiante',
+        // Usamos el id del reto como "leccionId" para que aparezca en Mis Entregas
+        leccionId: `reto_${reto.id}`,
+        leccionTitulo: `${tipo === 'diario' ? '🔥 Reto Diario' : '🏆 Reto Semanal'}: ${reto.titulo}`,
+        moduloId: `retos_${reto.nivel}`,
+        popcodeIndex: 0,
+        popcodeTitulo: reto.titulo,
+        htmlCode: code.html,
+        cssCode: code.css,
+        jsCode: code.js,
+      });
+
+      // Otorgar XP
+      await incrementUserXp(userId, reto.xp);
+      dispatch(addXp({ userId, amount: reto.xp, reason: `Reto completado: ${reto.titulo}` }));
+
+      setEntregado(true);
+      onEntregado?.();
+
+      toast.custom((t) => (
+        <div className={`max-w-sm w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl p-4 flex items-center gap-3 transition-all duration-300 ${t.visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg flex-shrink-0">
+            <Trophy size={22} className="text-white" />
           </div>
-          <h2 className="text-white font-black text-lg font-display">{m.label} · {m.sublabel}</h2>
-          <p className="text-white/70 text-sm mt-0.5">Completa los retos para ganar XP y mantener tu racha</p>
+          <div>
+            <p className="font-bold text-slate-900 dark:text-white text-sm">¡Reto entregado!</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Ganaste <strong className="text-amber-500">+{reto.xp} XP</strong> · Tu profesor lo revisará pronto
+            </p>
+          </div>
         </div>
-      </div>
+      ), { duration: 4000, position: 'top-center' });
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {retoDiario && <RetoCard reto={retoDiario} destacado />}
-        {retoSemanal && <RetoCard reto={retoSemanal} destacado />}
-      </div>
-    </div>
-  );
-}
-
-// ─── Listado de todos los retos ─────────────────────────────────────────────
-function TodosLosRetosSection({ nivel }) {
-  const retos = nivel === 'basico' ? RETOS_BASICO : RETOS_AVANZADO;
-  const [filtroTipo, setFiltroTipo] = useState('todos');
-  const [filtroSemana, setFiltroSemana] = useState('todas');
-
-  const semanas = useMemo(() => {
-    const s = [...new Set(retos.map(r => r.semana))].sort((a, b) => a - b);
-    return s;
-  }, [retos]);
-
-  const retosFiltrados = useMemo(() => {
-    return retos.filter(r => {
-      if (filtroTipo !== 'todos' && r.tipo !== filtroTipo) return false;
-      if (filtroSemana !== 'todas' && r.semana !== Number(filtroSemana)) return false;
-      return true;
-    });
-  }, [retos, filtroTipo, filtroSemana]);
-
-  const m = NIVEL_META[nivel];
+    } catch (err) {
+      console.error(err);
+      toast.error('Error al entregar. Intenta de nuevo.');
+    } finally {
+      setEnviando(false);
+    }
+  };
 
   return (
-    <div className="space-y-4">
-      {/* Filtros */}
-      <div className="flex flex-wrap gap-2 items-center">
-        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Tipo:</span>
-        {['todos', 'diario', 'semanal'].map(tipo => (
-          <button
-            key={tipo}
-            onClick={() => setFiltroTipo(tipo)}
-            className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all ${
-              filtroTipo === tipo
-                ? `${m.badgeBg} ${m.badgeText} ${m.badgeBorder}`
-                : 'bg-slate-100 dark:bg-surface-hover text-slate-600 dark:text-slate-400 border-transparent hover:border-slate-300 dark:hover:border-surface-border'
-            }`}
-          >
-            {tipo === 'todos' ? 'Todos' : tipo === 'diario' ? '🔥 Diarios' : '🏆 Semanales'}
-          </button>
-        ))}
+    <div className="space-y-3">
+      {/* Instrucciones colapsables */}
+      <InstruccionesPanel reto={reto} defaultOpen={false} />
 
-        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 ml-2">Semana:</span>
-        <select
-          value={filtroSemana}
-          onChange={e => setFiltroSemana(e.target.value)}
-          className="text-xs font-semibold px-3 py-1.5 rounded-lg border bg-slate-100 dark:bg-surface-hover text-slate-600 dark:text-slate-400 border-transparent dark:border-surface-border cursor-pointer"
+      {/* Editor */}
+      <CodeEditor
+        key={editorKey}
+        html={code.html}
+        css={code.css}
+        js={code.js}
+        onChange={handleCodeChange}
+        showPreview={true}
+        isSandbox={false}
+      />
+
+      {/* Barra de acciones */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <button
+          onClick={handleReset}
+          className="flex items-center gap-1.5 px-3 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white border border-slate-200 dark:border-surface-border rounded-xl hover:bg-slate-50 dark:hover:bg-surface-hover transition-all"
         >
-          <option value="todas">Todas</option>
-          {semanas.map(s => (
-            <option key={s} value={s}>Semana {s}</option>
-          ))}
-        </select>
-      </div>
+          <RotateCcw size={14} />
+          Reiniciar código
+        </button>
 
-      {/* Contador */}
-      <p className="text-xs text-slate-500 dark:text-slate-400">
-        Mostrando <strong className={m.badgeText}>{retosFiltrados.length}</strong> retos
-      </p>
-
-      {/* Lista */}
-      <div className="space-y-3">
-        {retosFiltrados.map(reto => (
-          <RetoCard key={reto.id} reto={reto} />
-        ))}
-        {retosFiltrados.length === 0 && (
-          <div className="text-center py-12 text-slate-400 dark:text-slate-500">
-            <Trophy size={40} className="mx-auto mb-3 opacity-40" />
-            <p className="font-medium">No hay retos con esos filtros</p>
+        {entregado ? (
+          <div className="flex items-center gap-2 px-4 py-2 bg-green-500/10 border border-green-500/30 rounded-xl text-green-600 dark:text-green-400 text-sm font-semibold">
+            <CheckCircle2 size={16} />
+            ¡Entregado! · +{reto.xp} XP
           </div>
+        ) : (
+          <button
+            onClick={handleEntregar}
+            disabled={enviando}
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#ea5837] hover:bg-[#c84223] disabled:opacity-60 text-white rounded-xl font-semibold text-sm transition-all shadow-sm hover:shadow-md"
+          >
+            {enviando ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Enviando...
+              </>
+            ) : (
+              <>
+                <Send size={16} />
+                Entregar reto · +{reto.xp} XP
+              </>
+            )}
+          </button>
         )}
       </div>
     </div>
   );
 }
 
-// ─── Estadísticas rápidas ───────────────────────────────────────────────────
-function StatsRow({ nivel }) {
-  const retos = nivel === 'basico' ? RETOS_BASICO : RETOS_AVANZADO;
-  const diarios = retos.filter(r => r.tipo === 'diario').length;
-  const semanales = retos.filter(r => r.tipo === 'semanal').length;
-  const xpTotal = retos.reduce((sum, r) => sum + r.xp, 0);
-  const semanas = [...new Set(retos.map(r => r.semana))].length;
-  const m = NIVEL_META[nivel];
+// ─── Tarjeta de reto (header + editor) ──────────────────────────────────────
+function RetoCard({ reto, tipo, userId, userName }) {
+  const [expanded, setExpanded] = useState(true);
+  const [entregado, setEntregado] = useState(false);
 
-  const stats = [
-    { icon: <Flame size={16} />, label: 'Retos diarios', valor: diarios, color: 'text-warning-500' },
-    { icon: <Trophy size={16} />, label: 'Retos semanales', valor: semanales, color: 'text-accent-500' },
-    { icon: <Star size={16} />, label: 'XP disponible', valor: xpTotal.toLocaleString(), color: 'text-brand-500 dark:text-brand-300' },
-    { icon: <Calendar size={16} />, label: 'Semanas', valor: semanas, color: m.badgeText },
-  ];
+  const esDiario = tipo === 'diario';
+  const tiempoRestante = esDiario ? tiempoRestanteDiario() : tiempoRestanteSemanal();
+
+  const headerGradient = esDiario
+    ? 'from-amber-500 to-orange-500'
+    : 'from-violet-600 to-purple-500';
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-      {stats.map(s => (
-        <div key={s.label} className="bg-white dark:bg-surface-card border border-slate-200 dark:border-surface-border rounded-xl p-3 flex items-center gap-3 shadow-sm dark:shadow-none">
-          <span className={s.color}>{s.icon}</span>
-          <div>
-            <p className="text-xl font-black text-slate-900 dark:text-white leading-none">{s.valor}</p>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{s.label}</p>
+    <div className="bg-white dark:bg-surface-card border border-slate-200 dark:border-surface-border rounded-2xl overflow-hidden shadow-sm dark:shadow-none">
+      {/* Header del reto */}
+      <div className={`relative bg-gradient-to-r ${headerGradient} p-5`}>
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 90% 10%, white 0%, transparent 60%)' }} />
+        <div className="relative z-10">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-inner flex-shrink-0">
+                {esDiario ? <Flame size={22} className="text-white" /> : <Trophy size={22} className="text-white" />}
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-white/80 text-xs font-semibold uppercase tracking-wider">
+                    {esDiario ? 'Reto del Día' : 'Reto de la Semana'}
+                  </span>
+                  <span className="flex items-center gap-1 text-[10px] font-bold bg-white/20 text-white px-2 py-0.5 rounded-full">
+                    <Star size={9} /> {reto.xp} XP
+                  </span>
+                  {entregado && (
+                    <span className="flex items-center gap-1 text-[10px] font-bold bg-green-400/30 text-white px-2 py-0.5 rounded-full">
+                      <CheckCircle2 size={9} /> Entregado
+                    </span>
+                  )}
+                </div>
+                <h2 className="text-white font-black text-lg font-display leading-snug">
+                  {reto.titulo}
+                </h2>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setExpanded(v => !v)}
+              className="flex-shrink-0 mt-1 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-all"
+            >
+              {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            </button>
+          </div>
+
+          {/* Metadatos */}
+          <div className="flex items-center gap-3 mt-3 flex-wrap">
+            <span className="flex items-center gap-1.5 text-white/70 text-xs">
+              <Clock size={12} />
+              Expira en {tiempoRestante}
+            </span>
+            <span className="text-white/40">·</span>
+            <span className="text-white/70 text-xs">
+              Semana {reto.semana}{reto.dia ? ` · Día ${reto.dia}` : ''}
+            </span>
+            <span className="text-white/40">·</span>
+            <span className="text-white/70 text-xs capitalize">
+              {reto.nivel === 'basico' ? '🌱 Básico' : '🚀 Avanzado'}
+            </span>
           </div>
         </div>
-      ))}
+      </div>
+
+      {/* Editor y controles */}
+      {expanded && (
+        <div className="p-4 space-y-3">
+          <RetoConEditor
+            reto={reto}
+            tipo={tipo}
+            userId={userId}
+            userName={userName}
+            onEntregado={() => setEntregado(true)}
+          />
+        </div>
+      )}
     </div>
   );
 }
 
-// ─── Página principal ────────────────────────────────────────────────────────
+// ─── Página principal ─────────────────────────────────────────────────────────
 export default function ChallengesPage() {
   const user = useSelector(selectCurrentUser);
+  const userId = user?.uid || user?.id;
+  const userName = user?.nombreMostrar || user?.displayName || 'Estudiante';
 
-  // Determina el nivel del usuario (básico o avanzado) según su salón
+  // Nivel según el salón del usuario
   const nivelUsuario = useMemo(() => {
     if (!user?.salon) return 'basico';
     return user.salon.toLowerCase().includes('avanzad') ? 'avanzado' : 'basico';
   }, [user?.salon]);
 
-  const [nivelTab, setNivelTab] = useState(nivelUsuario);
-  const [vista, setVista] = useState('hoy'); // 'hoy' | 'todos'
-  const m = NIVEL_META[nivelTab];
+  const retoDiario = useMemo(() => getRetoDiario(nivelUsuario), [nivelUsuario]);
+  const retoSemanal = useMemo(() => getRetoSemanal(nivelUsuario), [nivelUsuario]);
+
+  // Contador regresivo del tiempo restante del día (actualiza cada minuto)
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 60000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <div className="space-y-6 animate-fade-up">
-      {/* Hero header */}
+
+      {/* ── Header ── */}
       <div>
-        <div className="flex items-center gap-2 mb-1">
-          <Zap size={20} className="text-warning-500" />
-          <h1 className="text-2xl font-black font-display text-slate-900 dark:text-white">
-            Banco de Retos
-          </h1>
-        </div>
-        <p className="text-slate-600 dark:text-slate-400 text-sm">
-          Pon a prueba tus habilidades con retos diarios y semanales. ¡Completa para ganar XP!
+        <h1 className="text-2xl font-black font-display text-slate-900 dark:text-white flex items-center gap-2">
+          <Zap size={24} className="text-warning-500" />
+          Retos de Hoy
+        </h1>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          Un reto diario y uno semanal. Completa en el editor y entrega directamente aquí.
         </p>
       </div>
 
-      {/* Tabs de nivel */}
-      <div className="flex gap-2 p-1 bg-slate-100 dark:bg-surface-card rounded-xl border border-slate-200 dark:border-surface-border w-fit">
-        {['basico', 'avanzado'].map(n => {
-          const meta = NIVEL_META[n];
-          const activo = nivelTab === n;
-          return (
-            <button
-              key={n}
-              onClick={() => setNivelTab(n)}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2 ${
-                activo
-                  ? `bg-gradient-to-r ${meta.gradient} text-white shadow-md`
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <span className={`w-2 h-2 rounded-full ${activo ? 'bg-white/70' : meta.dot}`} />
-              {meta.label}
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${activo ? 'bg-white/20' : 'bg-slate-200 dark:bg-surface-hover'}`}>
-                {meta.sublabel}
-              </span>
-            </button>
-          );
-        })}
+      {/* ── Aviso de nivel ── */}
+      <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm ${
+        nivelUsuario === 'avanzado'
+          ? 'bg-violet-500/5 border-violet-500/20 text-violet-600 dark:text-violet-400'
+          : 'bg-teal-500/5 border-teal-500/20 text-teal-600 dark:text-teal-400'
+      }`}>
+        <Sparkles size={16} className="flex-shrink-0" />
+        <span>
+          Mostrando retos del curso <strong>{nivelUsuario === 'avanzado' ? 'Avanzado (POO & JS)' : 'Básico (HTML, CSS & JS)'}</strong>.
+          Los retos cambian automáticamente cada día y cada semana.
+        </span>
       </div>
 
-      {/* Stats */}
-      <StatsRow nivel={nivelTab} />
-
-      {/* Tabs hoy / todos */}
-      <div className="flex gap-1 border-b border-slate-200 dark:border-surface-border">
-        {[
-          { id: 'hoy', label: '⚡ Retos de hoy', icon: <Sparkles size={14} /> },
-          { id: 'todos', label: 'Banco completo', icon: <LayoutGrid size={14} /> },
-        ].map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setVista(tab.id)}
-            className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold border-b-2 transition-all -mb-px ${
-              vista === tab.id
-                ? `border-current ${m.badgeText}`
-                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-            }`}
-          >
-            {tab.icon}
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Contenido */}
-      {vista === 'hoy' ? (
-        <RetosDeHoySection nivel={nivelTab} />
+      {/* ── Reto Diario ── */}
+      {retoDiario ? (
+        <RetoCard
+          reto={retoDiario}
+          tipo="diario"
+          userId={userId}
+          userName={userName}
+        />
       ) : (
-        <TodosLosRetosSection nivel={nivelTab} />
+        <div className="flex items-center gap-3 p-5 bg-slate-50 dark:bg-surface-card border border-slate-200 dark:border-surface-border rounded-2xl text-slate-500 dark:text-slate-400">
+          <AlertTriangle size={18} />
+          <span className="text-sm">No hay reto diario disponible hoy.</span>
+        </div>
       )}
 
-      {/* Nota para el profesor */}
-      <div className="bg-slate-50 dark:bg-surface-card border border-slate-200 dark:border-surface-border rounded-2xl p-4">
-        <div className="flex gap-3 items-start">
-          <BookOpen size={18} className="flex-shrink-0 mt-0.5 text-brand-500" />
-          <div>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1">¿Cómo entregar un reto?</h3>
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Copia el código de partida, complétalo en el <strong>Sandbox</strong> o en tu editor,
-              y cuando esté listo entrégalo en la sección de <strong>Mis Entregas</strong>.
-              El profesor revisará que cumpla todos los criterios de evaluación listados en el reto.
-            </p>
-          </div>
+      {/* ── Reto Semanal ── */}
+      {retoSemanal ? (
+        <RetoCard
+          reto={retoSemanal}
+          tipo="semanal"
+          userId={userId}
+          userName={userName}
+        />
+      ) : (
+        <div className="flex items-center gap-3 p-5 bg-slate-50 dark:bg-surface-card border border-slate-200 dark:border-surface-border rounded-2xl text-slate-500 dark:text-slate-400">
+          <AlertTriangle size={18} />
+          <span className="text-sm">No hay reto semanal disponible esta semana.</span>
         </div>
+      )}
+
+      {/* ── Nota informativa ── */}
+      <div className="flex gap-3 items-start px-4 py-3.5 bg-slate-50 dark:bg-surface-card border border-slate-200 dark:border-surface-border rounded-2xl">
+        <BookOpen size={16} className="flex-shrink-0 mt-0.5 text-brand-500" />
+        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+          Una vez entregado, tu profesor recibirá tu código en el panel de revisión.
+          Puedes ver el estado de todas tus entregas en{' '}
+          <a href="/mis-entregas" className="text-[#ea5837] font-semibold hover:underline">
+            Mis Entregas
+          </a>.
+          Los XP se acreditan automáticamente al entregar.
+        </p>
       </div>
     </div>
   );
