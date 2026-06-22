@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '@store/slices/authSlice';
+import { RANKS } from '@store/slices/gamificationSlice';
 import {
   Users, FileText, BookOpen, Upload, TrendingUp, Clock,
   CheckCircle2, AlertCircle, Wifi, WifiOff, RefreshCw,
@@ -212,6 +213,23 @@ export default function AdminDashboardPage() {
             </div>
           </Link>
         ))}
+      </div>
+
+      {/* Niveles de Gamificación */}
+      <div className="bg-white dark:bg-surface-card border border-slate-200 dark:border-surface-border rounded-2xl shadow-sm p-5">
+        <h2 className="font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-4">
+          <Flame size={18} className="text-warning-500" />
+          Sistema de Rangos y Experiencia (XP)
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          {RANKS.map((r) => (
+            <div key={r.id} className="bg-slate-50 dark:bg-surface-hover border border-slate-100 dark:border-surface-border rounded-xl p-3 flex flex-col items-center justify-center text-center hover:scale-105 transition-transform">
+              <span className="text-3xl drop-shadow-sm filter saturate-150 mb-1">{r.icon}</span>
+              <p className="text-sm font-bold mt-1" style={{ color: r.color }}>{r.label}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">{r.minXp.toLocaleString()} XP</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Tabla de estudiantes */}
