@@ -4,6 +4,9 @@ import { useSelector, useDispatch } from 'react-redux';
 import { selectIsOnline } from '@store/slices/uiSlice';
 import { selectCurrentUser, selectSessionMode } from '@store/slices/authSlice';
 import CodeEditor from '@components/editor/CodeEditor';
+import PopcodeEditor from '@components/editor/PopcodeEditor';
+import BotonEntregaManual from '@components/editor/BotonEntregaManual';
+import PdfViewer from '@components/PdfViewer';
 import {
   BookOpen, Terminal, Paperclip, Send, VideoOff,
   CheckCircle2, Loader2, FileText, ExternalLink, ChevronLeft, ChevronRight, AlertTriangle,
@@ -458,19 +461,13 @@ export default function LessonPage() {
                           target="_blank" 
                           rel="noopener noreferrer" 
                           className="shrink-0 flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-teal-500/10 text-teal-400 border border-teal-500/30 rounded-lg hover:bg-teal-500/20 transition-all"
-                          title="Abrir en pantalla completa (Recomendado para celulares)"
+                          title="Abrir en pantalla completa"
                         >
                           <ExternalLink size={14} />
-                          Abrir PDF
+                          Pantalla completa
                         </a>
                       </div>
-                      <div className="rounded-xl overflow-hidden border border-teal-500/20" style={{ height: '520px' }}>
-                        <iframe
-                          src={b.path}
-                          className="w-full h-full"
-                          title={b.nombre}
-                        />
-                      </div>
+                      <PdfViewer url={b.path} title={b.nombre} />
                     </div>
                   );
                   // DOCX — descarga directa
