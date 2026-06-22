@@ -133,7 +133,19 @@ function BotonEntregaManual({ lamina, leccion, modulo, user, isOffline }) {
 }
 
 function PopcodeEditor({ popcode, index, leccion, modulo, user, isOffline }) {
-  const [code, setCode]             = useState({ html: popcode.baseCode || '', css: popcode.cssCode || '', js: popcode.jsCode || '' });
+  const userId = user?.uid || user?.id;
+  const draftKey = userId && leccion?.id ? `popcode_draft_${userId}_${leccion.id}_${index}` : null;
+
+  const [code, setCode] = useState(() => {
+    if (draftKey) {
+      try {
+        const saved = localStorage.getItem(draftKey);
+        if (saved) return JSON.parse(saved);
+      } catch (e) { /* ignorar */ }
+    }
+    return { html: popcode.baseCode || '', css: popcode.cssCode || '', js: popcode.jsCode || '' };
+  });
+
   const [entregando, setEntregando] = useState(false);
   const [entregado, setEntregado]   = useState(false);
   const [isEdit, setIsEdit]         = useState(false);
@@ -151,7 +163,13 @@ function PopcodeEditor({ popcode, index, leccion, modulo, user, isOffline }) {
         const snap = await getDoc(ref);
         if (snap.exists()) {
           const data = snap.data();
-          setCode({ html: data.htmlCode || '', css: data.cssCode || '', js: data.jsCode || '' });
+          // Solo restaurar de Firebase si no hay un borrador local activo o si deciden sobrescribir.
+          // Para no perder trabajo offline, damos prioridad al borrador local si existe,
+          // pero si el borrador es igual a la BD, no pasa nada.
+          const draft = localStorage.getItem(draftKey);
+          if (!draft) {
+            setCode({ html: data.htmlCode || '', css: data.cssCode || '', js: data.jsCode || '' });
+          }
           setIsEdit(true);
         }
       } catch (err) {
@@ -162,9 +180,15 @@ function PopcodeEditor({ popcode, index, leccion, modulo, user, isOffline }) {
   }, [userId, leccion?.id, index, isOffline]);
 
   const handleChange = useCallback((lang, val) => {
-    setCode(prev => ({ ...prev, [lang]: val }));
+    setCode(prev => {
+      const next = { ...prev, [lang]: val };
+      if (draftKey) {
+        localStorage.setItem(draftKey, JSON.stringify(next));
+      }
+      return next;
+    });
     setEntregado(false);
-  }, []);
+  }, [draftKey]);
 
   const handleEntregar = async () => {
     if (!userId) return setError('No se encontró tu sesión. Intenta recargar la página.');
