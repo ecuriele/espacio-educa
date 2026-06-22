@@ -444,12 +444,26 @@ export default function LessonPage() {
                 if (b.type === 'lamina') {
                   if (b.formato === 'pdf') return (
                     <div key={b.id || bIdx} className="space-y-2">
-                      <p className="text-sm font-semibold text-teal-300 flex items-center gap-1.5">
-                        <BookMarked size={14} className="text-teal-400" />{b.nombre}
-                      </p>
-                      {b.temaLabel && (
-                        <p className="text-xs text-slate-500">{b.nivelLabel} · {b.temaLabel}</p>
-                      )}
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-semibold text-teal-300 flex items-center gap-1.5">
+                            <BookMarked size={14} className="text-teal-400" />{b.nombre}
+                          </p>
+                          {b.temaLabel && (
+                            <p className="text-xs text-slate-500 mt-0.5">{b.nivelLabel} · {b.temaLabel}</p>
+                          )}
+                        </div>
+                        <a 
+                          href={b.path} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="shrink-0 flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-teal-500/10 text-teal-400 border border-teal-500/30 rounded-lg hover:bg-teal-500/20 transition-all"
+                          title="Abrir en pantalla completa (Recomendado para celulares)"
+                        >
+                          <ExternalLink size={14} />
+                          Abrir PDF
+                        </a>
+                      </div>
                       <div className="rounded-xl overflow-hidden border border-teal-500/20" style={{ height: '520px' }}>
                         <iframe
                           src={b.path}
