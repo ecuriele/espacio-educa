@@ -85,10 +85,17 @@ export default function PdfViewer({ url }) {
           }}
           loading={null}
           error={
-            <div className="text-red-400 text-sm p-4 text-center max-w-md">
-              <p className="font-bold mb-2">Error al cargar el PDF:</p>
-              <code className="block bg-slate-800 p-2 rounded text-xs text-red-300 break-all">{loadError || 'Error desconocido'}</code>
-              <p className="mt-2 text-slate-400 text-xs">Por favor, envíame este mensaje exacto para poder solucionarlo.</p>
+            <div className="flex flex-col items-center justify-center p-8 text-center max-w-sm mx-auto h-full">
+              <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-4 border border-slate-700">
+                <span className="text-2xl">📡</span>
+              </div>
+              <h3 className="text-slate-200 font-bold text-lg mb-2">Lámina no disponible offline</h3>
+              <p className="text-slate-400 text-sm leading-relaxed mb-4">
+                Parece que no tienes conexión y esta presentación aún no ha sido guardada en tu dispositivo.
+              </p>
+              <div className="bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs p-3 rounded-lg text-left">
+                <strong>💡 Tip:</strong> Conéctate a internet y abre esta lámina al menos una vez. Una vez que cargue, quedará guardada automáticamente en tu dispositivo para que puedas verla en cualquier momento, ¡incluso sin internet!
+              </div>
             </div>
           }
           className="flex justify-center"
