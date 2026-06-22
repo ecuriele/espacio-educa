@@ -4,14 +4,20 @@ import { ChevronLeft, ChevronRight, Maximize, ZoomIn, ZoomOut, Loader2 } from 'l
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
-// Usar el worker estático desde la carpeta public para máxima estabilidad
-pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+// Instanciar el worker nativamente usando el empaquetador de Vite.
+// Esto asegura que el Service Worker (PWA) lo cachee automáticamente y elimina problemas de MIME Types.
+import PdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?worker';
+
+if (!pdfjs.GlobalWorkerOptions.workerPort) {
+  pdfjs.GlobalWorkerOptions.workerPort = new PdfWorker();
+}
 
 export default function PdfViewer({ url }) {
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
 
   function onDocumentLoadSuccess({ numPages }) {
     setNumPages(numPages);
@@ -72,8 +78,19 @@ export default function PdfViewer({ url }) {
         <Document
           file={url}
           onLoadSuccess={onDocumentLoadSuccess}
+          onLoadError={(error) => {
+            console.error('PDF Load Error:', error);
+            setLoadError(error.message || String(error));
+            setLoading(false);
+          }}
           loading={null}
-          error={<div className="text-red-400 text-sm p-4 text-center">Error al cargar el PDF. Verifica tu conexión o intenta descargarlo.</div>}
+          error={
+            <div className="text-red-400 text-sm p-4 text-center max-w-md">
+              <p className="font-bold mb-2">Error al cargar el PDF:</p>
+              <code className="block bg-slate-800 p-2 rounded text-xs text-red-300 break-all">{loadError || 'Error desconocido'}</code>
+              <p className="mt-2 text-slate-400 text-xs">Por favor, envíame este mensaje exacto para poder solucionarlo.</p>
+            </div>
+          }
           className="flex justify-center"
         >
           <Page 
