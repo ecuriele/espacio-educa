@@ -124,9 +124,9 @@ function PodiumItem({ entry, position, isMe }) {
     'from-orange-400 to-orange-600 border-orange-300 dark:border-orange-500/30 text-orange-950 shadow-orange-600/30';
 
   const badgeIcon = 
-    position === 1 ? <Medal size={32} className="text-yellow-100 drop-shadow-md" fill="currentColor" /> :
-    position === 2 ? <Medal size={28} className="text-slate-100 drop-shadow-md" fill="currentColor" /> :
-    <Medal size={28} className="text-orange-100 drop-shadow-md" fill="currentColor" />;
+    position === 1 ? <span className="text-4xl drop-shadow-md">🥇</span> :
+    position === 2 ? <span className="text-3xl drop-shadow-md">🥈</span> :
+    <span className="text-3xl drop-shadow-md">🥉</span>;
 
   const badgeBg = 
     position === 1 ? 'bg-yellow-100 text-yellow-600 border-yellow-300' :
