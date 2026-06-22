@@ -152,7 +152,6 @@ function PopcodeEditor({ popcode, index, leccion, modulo, user, isOffline }) {
   const [error, setError]           = useState('');
   const dispatch = useDispatch();
 
-  const userId = user?.uid || user?.id;
 
   // Cargar entrega existente
   useEffect(() => {
