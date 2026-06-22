@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { pdfjs, Document, Page } from 'react-pdf';
 import { ChevronLeft, ChevronRight, Maximize, ZoomIn, ZoomOut, Loader2 } from 'lucide-react';
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-import 'react-pdf/dist/esm/Page/TextLayer.css';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
 
 // Configurar el worker de PDF.js usando CDN para evitar problemas de build en Vite
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
