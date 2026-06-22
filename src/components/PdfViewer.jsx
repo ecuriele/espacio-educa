@@ -4,8 +4,9 @@ import { ChevronLeft, ChevronRight, Maximize, ZoomIn, ZoomOut, Loader2 } from 'l
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
-// Configurar el worker de PDF.js usando CDN para evitar problemas de build en Vite
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// Usar el worker localmente a través de Vite para asegurar soporte 100% offline
+import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
 
 export default function PdfViewer({ url }) {
   const [numPages, setNumPages] = useState(null);
