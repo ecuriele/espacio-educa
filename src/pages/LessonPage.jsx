@@ -4,8 +4,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { selectIsOnline } from '@store/slices/uiSlice';
 import { selectCurrentUser, selectSessionMode } from '@store/slices/authSlice';
 import CodeEditor from '@components/editor/CodeEditor';
-import PopcodeEditor from '@components/editor/PopcodeEditor';
-import BotonEntregaManual from '@components/editor/BotonEntregaManual';
 import PdfViewer from '@components/PdfViewer';
 import {
   BookOpen, Terminal, Paperclip, Send, VideoOff,
