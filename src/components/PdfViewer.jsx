@@ -7,7 +7,7 @@ import 'react-pdf/dist/esm/Page/TextLayer.css';
 // Configurar el worker de PDF.js usando CDN para evitar problemas de build en Vite
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
-export default function PdfViewer({ url, title }) {
+export default function PdfViewer({ url }) {
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
