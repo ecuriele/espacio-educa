@@ -151,7 +151,7 @@ export default function ModulesPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-xs font-semibold ${meta.color}`}>Módulo {modulo.orden ?? modulo.order}</span>
+                      <span className={`text-xs font-semibold ${meta.color}`}>Módulo {idx + 1}</span>
                       {isLocked && <span className="text-xs text-slate-500 flex items-center gap-1"><Lock size={12} /> Bloqueado</span>}
                       {completo && <span className="text-xs text-green-400 flex items-center gap-1"><CheckCircle2 size={12} /> Completo</span>}
                     </div>

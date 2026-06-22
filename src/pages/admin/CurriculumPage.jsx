@@ -103,6 +103,15 @@ function CourseRow({ course, onEdit, onDelete }) {
   const [open,        setOpen]        = useState(false);
   const [lessons,     setLessons]     = useState([]);
   const [loadingLessons, setLoadingLessons] = useState(false);
+  const [lessonsCount, setLessonsCount] = useState(course.totalLessons ?? 0);
+
+  useEffect(() => {
+    if (typeof course.totalLessons !== 'number') {
+      getLessonsByCourse(course.id).then(res => setLessonsCount(res.length)).catch(() => {});
+    } else {
+      setLessonsCount(course.totalLessons);
+    }
+  }, [course.id, course.totalLessons]);
 
   const LEVEL_BADGE = {
     basic:    'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',
@@ -116,6 +125,7 @@ function CourseRow({ course, onEdit, onDelete }) {
       try {
         const data = await getLessonsByCourse(course.id);
         setLessons(data);
+        setLessonsCount(data.length);
       } finally {
         setLoadingLessons(false);
       }
@@ -152,7 +162,7 @@ function CourseRow({ course, onEdit, onDelete }) {
             ? <span className="flex items-center gap-1 text-[10px] text-green-600 dark:text-green-400 font-medium"><Globe size={11} /> Publicado</span>
             : <span className="flex items-center gap-1 text-[10px] text-slate-400 font-medium"><EyeOff size={11} /> Borrador</span>
           }
-          <span className="text-xs text-slate-400 hidden sm:block">{course.totalLessons ?? lessons.length} lecciones</span>
+          <span className="text-xs text-slate-400 hidden sm:block">{lessonsCount === 1 ? '1 lección' : `${lessonsCount} lecciones`}</span>
           <button 
             onClick={async (e) => {
               e.stopPropagation();
