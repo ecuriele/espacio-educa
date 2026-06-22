@@ -93,7 +93,25 @@ export default function AchievementToast() {
       position="top-right"
       containerStyle={{ top: '72px', right: '16px' }}
       toastOptions={{
-        style: { background: 'transparent', boxShadow: 'none', padding: 0 },
+        className: 'glass-toast',
+        style: {
+          background: 'var(--toast-bg, rgba(255, 255, 255, 0.9))',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          border: '1px solid var(--toast-border, rgba(0, 0, 0, 0.05))',
+          color: 'var(--toast-color, #1e293b)',
+          borderRadius: '16px',
+          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+          padding: '12px 16px',
+          fontSize: '14px',
+          fontWeight: '600',
+        },
+        success: {
+          iconTheme: { primary: '#10b981', secondary: '#fff' },
+        },
+        error: {
+          iconTheme: { primary: '#ef4444', secondary: '#fff' },
+        },
       }}
     />
   );

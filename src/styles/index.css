@@ -20,10 +20,20 @@
     --sidebar-collapsed-width: 72px;
     --topbar-height: 60px;
     color-scheme: dark;
+
+    /* Toasts en modo oscuro (por defecto) */
+    --toast-bg: rgba(15, 23, 42, 0.85);
+    --toast-border: rgba(255, 255, 255, 0.1);
+    --toast-color: #f8fafc;
   }
 
   html.light {
     color-scheme: light;
+    
+    /* Toasts en modo claro */
+    --toast-bg: rgba(255, 255, 255, 0.85);
+    --toast-border: rgba(0, 0, 0, 0.08);
+    --toast-color: #0f172a;
   }
 
   html {
