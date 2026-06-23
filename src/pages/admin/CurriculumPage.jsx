@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  BookOpen, Plus, Pencil, Trash2, ChevronDown, ChevronRight,
+  BookOpen, Plus, Pencil, Trash2, ChevronDown, ChevronRight, ChevronUp,
   GripVertical, Save, X, AlertTriangle, RefreshCw, CheckCircle2,
   FileText, Calendar, Globe, EyeOff, Loader2, Video, Upload
 } from 'lucide-react';
@@ -99,7 +99,7 @@ const TYPE_BADGE = {
   quiz:      { label: 'Quiz',    color: 'bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400' },
 };
 
-function CourseRow({ course, onEdit, onDelete }) {
+function CourseRow({ course, index, totalCourses, onMoveUp, onMoveDown, onEdit, onDelete }) {
   const [open,        setOpen]        = useState(false);
   const [lessons,     setLessons]     = useState([]);
   const [loadingLessons, setLoadingLessons] = useState(false);
@@ -132,8 +132,6 @@ function CourseRow({ course, onEdit, onDelete }) {
     }
   };
 
-
-
   const handleDeleteLesson = async (lessonId) => {
     if (!confirm('¿Eliminar esta lección?')) return;
     await deleteLesson(lessonId);
@@ -144,7 +142,22 @@ function CourseRow({ course, onEdit, onDelete }) {
     <div className="bg-white dark:bg-surface-card border border-slate-200 dark:border-surface-border rounded-2xl overflow-hidden shadow-sm">
       {/* Header del módulo */}
       <div className="flex items-center gap-3 px-5 py-4">
-        <GripVertical size={16} className="text-slate-300 shrink-0 cursor-grab" />
+        <div className="flex flex-col gap-1 items-center shrink-0">
+          <button 
+            disabled={index === 0} 
+            onClick={(e) => { e.stopPropagation(); onMoveUp(); }} 
+            className="text-slate-300 hover:text-slate-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronUp size={16} />
+          </button>
+          <button 
+            disabled={index === totalCourses - 1} 
+            onClick={(e) => { e.stopPropagation(); onMoveDown(); }} 
+            className="text-slate-300 hover:text-slate-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronDown size={16} />
+          </button>
+        </div>
         <button onClick={handleToggle} className="flex-1 flex items-center gap-3 text-left">
           {open ? <ChevronDown size={18} className="text-[#ea5837]" /> : <ChevronRight size={18} className="text-slate-400" />}
           <div>
@@ -376,7 +389,7 @@ export default function CurriculumPage() {
               <div key={level}>
                 <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">{label}</h2>
                 <div className="space-y-3">
-                  {items.map((course) =>
+                  {items.map((course, i) =>
                     editingCourse?.id === course.id ? (
                       <CourseForm
                         key={course.id}
@@ -389,6 +402,10 @@ export default function CurriculumPage() {
                       <CourseRow
                         key={course.id}
                         course={course}
+                        index={i}
+                        totalCourses={items.length}
+                        onMoveUp={() => handleMoveUp(courses.indexOf(course))}
+                        onMoveDown={() => handleMoveDown(courses.indexOf(course))}
                         onEdit={(c) => { setEditingCourse(c); setIsAdding(false); }}
                         onDelete={handleDeleteCourse}
                       />
