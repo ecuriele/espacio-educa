@@ -19,12 +19,13 @@ import {
 } from '@services/firebase/firestoreService';
 import { subirArchivo } from '@services/firebase/storageService';
 
-const EMPTY_COURSE = { title: '', level: 'basic', description: '', fechaLimite: '', tags: '' };
+const EMPTY_COURSE = { title: '', level: 'basic', description: '', fechaLimite: '', tags: '', order: '' };
 
 function CourseForm({ initial = EMPTY_COURSE, onSave, onCancel, saving }) {
   const [form, setForm] = useState({
     ...EMPTY_COURSE,
     ...initial,
+    order: initial.order ?? '',
     tags: Array.isArray(initial.tags) ? initial.tags.join(', ') : initial.tags ?? '',
   });
 
@@ -54,13 +55,23 @@ function CourseForm({ initial = EMPTY_COURSE, onSave, onCancel, saving }) {
       <div className="flex gap-3 flex-wrap">
         <select
           value={form.level} onChange={(e) => set('level', e.target.value)}
-          className="flex-1 min-w-[140px] px-3 py-2 text-sm bg-white dark:bg-surface-card border border-slate-200 dark:border-surface-border rounded-lg focus:outline-none"
+          className="flex-1 min-w-[120px] px-3 py-2 text-sm bg-white dark:bg-surface-card border border-slate-200 dark:border-surface-border rounded-lg focus:outline-none"
         >
           <option value="basic">Básico</option>
           <option value="advanced">Avanzado</option>
         </select>
-        <div className="flex-1 min-w-[200px] space-y-1">
-          <label className="text-xs text-slate-500">Duración del módulo</label>
+        <div className="flex-none w-[80px] space-y-1">
+          <label className="text-[10px] font-bold text-slate-500 uppercase">Orden</label>
+          <input
+            type="number"
+            value={form.order}
+            onChange={(e) => set('order', e.target.value ? Number(e.target.value) : '')}
+            className="w-full px-3 py-2 text-sm bg-white dark:bg-surface-card border border-slate-200 dark:border-surface-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ea5837]"
+            placeholder="1"
+          />
+        </div>
+        <div className="flex-1 min-w-[150px] space-y-1">
+          <label className="text-[10px] font-bold text-slate-500 uppercase">Duración</label>
           <input
             type="date"
             value={form.fechaLimite || ''}
@@ -99,13 +110,18 @@ const TYPE_BADGE = {
   quiz:      { label: 'Quiz',    color: 'bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400' },
 };
 
-function CourseRow({ course, index, totalCourses, onMoveUp, onMoveDown, onEdit, onDelete }) {
+function CourseRow({ course, onEdit, onDelete }) {
   const [open,        setOpen]        = useState(false);
   const [lessons,     setLessons]     = useState([]);
   const [loadingLessons, setLoadingLessons] = useState(false);
+  const [lessonsCount, setLessonsCount] = useState(0);
 
-  // El total de lecciones ahora siempre se mantiene actualizado en la base de datos (course.totalLessons)
-  const lessonsCount = course.totalLessons ?? 0;
+  // Consultar siempre la longitud real para corregir discrepancias con datos antiguos
+  useEffect(() => {
+    getLessonsByCourse(course.id)
+      .then(res => setLessonsCount(res.length))
+      .catch(() => {});
+  }, [course.id]);
 
   const LEVEL_BADGE = {
     basic:    'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',
@@ -135,21 +151,8 @@ function CourseRow({ course, index, totalCourses, onMoveUp, onMoveDown, onEdit, 
     <div className="bg-white dark:bg-surface-card border border-slate-200 dark:border-surface-border rounded-2xl overflow-hidden shadow-sm">
       {/* Header del módulo */}
       <div className="flex items-center gap-3 px-5 py-4">
-        <div className="flex flex-col gap-1 items-center shrink-0">
-          <button 
-            disabled={index === 0} 
-            onClick={(e) => { e.stopPropagation(); onMoveUp(); }} 
-            className="text-slate-300 hover:text-slate-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            <ChevronUp size={16} />
-          </button>
-          <button 
-            disabled={index === totalCourses - 1} 
-            onClick={(e) => { e.stopPropagation(); onMoveDown(); }} 
-            className="text-slate-300 hover:text-slate-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            <ChevronDown size={16} />
-          </button>
+        <div className="flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-lg w-8 h-8 shrink-0">
+          <span className="text-xs font-bold text-slate-500">{course.order ?? '-'}</span>
         </div>
         <button onClick={handleToggle} className="flex-1 flex items-center gap-3 text-left">
           {open ? <ChevronDown size={18} className="text-[#ea5837]" /> : <ChevronRight size={18} className="text-slate-400" />}
@@ -269,8 +272,7 @@ export default function CurriculumPage() {
   const handleAddCourse = async (data) => {
     setSaving(true);
     try {
-      // El orden se auto-asigna según cuántos módulos hay ya
-      const nextOrder = courses.length + 1;
+      const nextOrder = data.order || (courses.length + 1);
       await createCourse({ ...data, order: nextOrder, totalLessons: 0 });
       setIsAdding(false);
     } finally {
@@ -395,10 +397,6 @@ export default function CurriculumPage() {
                       <CourseRow
                         key={course.id}
                         course={course}
-                        index={i}
-                        totalCourses={items.length}
-                        onMoveUp={() => handleMoveUp(courses.indexOf(course))}
-                        onMoveDown={() => handleMoveDown(courses.indexOf(course))}
                         onEdit={(c) => { setEditingCourse(c); setIsAdding(false); }}
                         onDelete={handleDeleteCourse}
                       />
