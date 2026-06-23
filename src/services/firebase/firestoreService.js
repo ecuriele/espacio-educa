@@ -363,7 +363,7 @@ export function computePorcentajeCompletitud(progreso, totalLecciones) {
 /**
  * Obtener la tabla de posiciones global ordenada por XP.
  */
-export async function getLeaderboard(salonQuery = 'all', limitCount = 50) {
+export async function getLeaderboard(queryFilter = 'all', limitCount = 50) {
   const q = query(
     collection(db, 'perfiles_usuarios'),
     where('rol', '==', 'estudiante')
@@ -371,8 +371,12 @@ export async function getLeaderboard(salonQuery = 'all', limitCount = 50) {
   try {
     const snapshot = await getDocs(q);
     let arr = snapshotToArray(snapshot);
-    if (salonQuery !== 'all') {
-      arr = arr.filter(u => (u.salon || 'basico').toLowerCase() === salonQuery.toLowerCase());
+    if (queryFilter !== 'all') {
+      arr = arr.filter(u => {
+        const matchSalon = (u.salon || 'basico').toLowerCase() === (queryFilter.salon || 'basico').toLowerCase();
+        const matchColegio = (u.colegio || '').toLowerCase() === (queryFilter.colegio || '').toLowerCase();
+        return matchSalon && matchColegio;
+      });
     }
     arr = arr.map(u => ({ ...u, xp: u.xp || 0 })).sort((a, b) => b.xp - a.xp);
     return arr.slice(0, limitCount);
@@ -381,8 +385,12 @@ export async function getLeaderboard(salonQuery = 'all', limitCount = 50) {
     try {
       const cached = await getDocsFromCache(q);
       let arr = snapshotToArray(cached);
-      if (salonQuery !== 'all') {
-        arr = arr.filter(u => (u.salon || 'basico').toLowerCase() === salonQuery.toLowerCase());
+      if (queryFilter !== 'all') {
+        arr = arr.filter(u => {
+          const matchSalon = (u.salon || 'basico').toLowerCase() === (queryFilter.salon || 'basico').toLowerCase();
+          const matchColegio = (u.colegio || '').toLowerCase() === (queryFilter.colegio || '').toLowerCase();
+          return matchSalon && matchColegio;
+        });
       }
       arr = arr.map(u => ({ ...u, xp: u.xp || 0 })).sort((a, b) => b.xp - a.xp);
       return arr.slice(0, limitCount);

@@ -22,8 +22,11 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     if (currentUser) {
-      const salonQuery = isTeacher ? 'all' : (currentUser.salon || 'basico');
-      dispatch(fetchLeaderboard(salonQuery));
+      const queryFilter = isTeacher ? 'all' : { 
+        salon: currentUser.salon || 'básico', 
+        colegio: currentUser.colegio || '' 
+      };
+      dispatch(fetchLeaderboard(queryFilter));
     }
   }, [dispatch, currentUser, isTeacher]);
 

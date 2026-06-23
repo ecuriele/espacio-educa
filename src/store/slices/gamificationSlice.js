@@ -162,9 +162,9 @@ export const loadUserAchievements = createAsyncThunk(
 /** Cargar leaderboard desde API (con fallback vacío si offline) */
 export const fetchLeaderboard = createAsyncThunk(
   'gamification/fetchLeaderboard',
-  async (salonQuery = 'all', { rejectWithValue }) => {
+  async (queryFilter = 'all', { rejectWithValue }) => {
     try {
-      const data = await getLeaderboard(salonQuery, 50);
+      const data = await getLeaderboard(queryFilter, 50);
       return data.map((user, index) => ({
         userId: user.id,
         displayName: user.nombreMostrar,

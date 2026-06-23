@@ -114,6 +114,11 @@ export default function ModulesPage() {
   const modulosBasicos    = modulos.filter(m => m.nivel === 'basico'   || m.level === 'basic');
   const modulosAvanzados  = modulos.filter(m => m.nivel === 'avanzado' || m.level === 'advanced');
 
+  // Evaluar permisos de visualización
+  const userSalon = user?.salon?.toLowerCase() || 'básico';
+  const showBasic = isTeacher || userSalon === 'básico' || userSalon === 'basico';
+  const showAdvanced = isTeacher || userSalon === 'avanzado';
+
   const renderLevel = (listaModulos, levelKey) => {
     if (listaModulos.length === 0) return null;
     const meta = LEVEL_LABELS[levelKey];
@@ -254,10 +259,10 @@ export default function ModulesPage() {
           </p>
         </div>
       ) : (
-        <>
-          {(!user || user.salon?.toLowerCase().includes('basic') || user.salon?.toLowerCase().includes('básic') || isTeacher || !user.salon) && renderLevel(modulosBasicos, 'basic')}
-          {(!user || user.salon?.toLowerCase().includes('avanzad') || isTeacher || !user.salon) && renderLevel(modulosAvanzados, 'advanced')}
-        </>
+        <div className="space-y-12 pb-12">
+          {showBasic && renderLevel(modulosBasicos, 'basic')}
+          {showAdvanced && renderLevel(modulosAvanzados, 'advanced')}
+        </div>
       )}
     </div>
   );
