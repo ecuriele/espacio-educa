@@ -485,8 +485,27 @@ function CodeBlock({ block, onChange, ...rest }) {
   const [tab, setTab] = useState('instrucciones');
 
   return (
-    <BlockWrapper {...rest} color="text-green-400" bg="bg-green-500/10 border-green-500/30" icon={Code2} label="Reto de Código">
+    <BlockWrapper {...rest} color="text-green-400" bg="bg-green-500/10 border-green-500/30" icon={Code2} label="Reto de Código (Popcode)">
       <div className="space-y-2">
+        
+        {/* XP Reward */}
+        <div className="flex items-center justify-between bg-surface-dark border border-green-500/20 px-3 py-2 rounded-lg">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">⭐</span>
+            <div>
+              <p className="text-xs font-semibold text-slate-200">Recompensa máxima (XP)</p>
+              <p className="text-[10px] text-slate-500">XP otorgado si saca 20/20.</p>
+            </div>
+          </div>
+          <input
+            type="number"
+            min="10"
+            step="10"
+            value={block.xpReward ?? 50}
+            onChange={e => onChange({ ...block, xpReward: Number(e.target.value) })}
+            className="w-20 bg-surface-card border border-surface-border rounded px-2 py-1 text-sm text-center text-yellow-400 font-bold focus:outline-none focus:border-yellow-400/50"
+          />
+        </div>
 
         {/* Tabs */}
         <div className="flex gap-1 flex-wrap">

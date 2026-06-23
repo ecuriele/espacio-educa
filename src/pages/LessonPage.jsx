@@ -210,6 +210,7 @@ function PopcodeEditor({ popcode, index, leccion, modulo, user, isOffline }) {
         moduloId:         modulo?.id || '',
         popcodeIndex:     index,
         popcodeTitulo:    popcode.instrucciones?.slice(0, 60) || `Popcode ${index + 1}`,
+        xpReward:         popcode.xpReward ?? 50,
         htmlCode:         code.html,
         cssCode:          code.css,
         jsCode:           code.js,
@@ -245,11 +246,16 @@ function PopcodeEditor({ popcode, index, leccion, modulo, user, isOffline }) {
       {/* Instrucciones del popcode */}
       {popcode.instrucciones && (
         <div className="bg-slate-900/60 border border-green-500/20 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Terminal size={13} className="text-green-400" />
-            <span className="text-xs text-green-400 font-semibold uppercase tracking-wide">
-              Popcode {index + 1} — Instrucciones
-            </span>
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2">
+              <Terminal size={13} className="text-green-400" />
+              <span className="text-xs text-green-400 font-semibold uppercase tracking-wide">
+                Popcode {index + 1} — Instrucciones
+              </span>
+            </div>
+            <div className="flex items-center gap-1 px-2 py-0.5 bg-yellow-400/10 border border-yellow-400/20 rounded-full">
+              <span className="text-[10px] font-bold text-yellow-400">⭐ {popcode.xpReward ?? 50} XP</span>
+            </div>
           </div>
           <p className="text-sm text-slate-300 whitespace-pre-wrap">{popcode.instrucciones}</p>
         </div>

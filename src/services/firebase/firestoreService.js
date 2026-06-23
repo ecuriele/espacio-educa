@@ -429,7 +429,7 @@ export async function updateUserStreak(userId, currentStreak) {
  * Cada entrega es un documento único por (estudianteId + leccionId + popcodeIndex).
  * Si el alumno re-entrega sobreescribe la entrega anterior.
  */
-export async function crearEntrega({ estudianteId, estudianteNombre, leccionId, leccionTitulo, moduloId, popcodeIndex, popcodeTitulo, htmlCode, cssCode, jsCode }) {
+export async function crearEntrega({ estudianteId, estudianteNombre, leccionId, leccionTitulo, moduloId, popcodeIndex, popcodeTitulo, xpReward, htmlCode, cssCode, jsCode }) {
   // ID determinístico para poder re-entregar sin duplicar
   const entregaId = `${estudianteId}_${leccionId}_${popcodeIndex}`;
   const ref = doc(db, 'entregas', entregaId);
@@ -444,6 +444,7 @@ export async function crearEntrega({ estudianteId, estudianteNombre, leccionId, 
     moduloId,
     popcodeIndex,
     popcodeTitulo,
+    xpReward: xpReward ?? 50,
     htmlCode,
     cssCode,
     jsCode,
