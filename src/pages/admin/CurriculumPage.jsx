@@ -272,7 +272,8 @@ export default function CurriculumPage() {
   const handleAddCourse = async (data) => {
     setSaving(true);
     try {
-      const nextOrder = data.order || (courses.length + 1);
+      const levelCourses = courses.filter(c => c.level === data.level || c.nivel === data.level);
+      const nextOrder = data.order || (levelCourses.length + 1);
       await createCourse({ ...data, order: nextOrder, totalLessons: 0 });
       setIsAdding(false);
     } finally {
