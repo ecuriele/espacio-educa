@@ -182,6 +182,17 @@ export async function createLeccion(moduloId, data) {
     creadoEn: serverTimestamp(),
     actualizadoEn: serverTimestamp(),
   });
+
+  if (moduloId) {
+    try {
+      await updateDoc(doc(db, 'modulos', moduloId), {
+        totalLessons: firestoreIncrement(1)
+      });
+    } catch (e) {
+      console.warn('No se pudo actualizar el conteo de lecciones del módulo', e);
+    }
+  }
+
   return ref.id;
 }
 
@@ -194,7 +205,21 @@ export async function updateLeccion(leccionId, data) {
 }
 
 export async function deleteLeccion(leccionId) {
-  await deleteDoc(doc(db, 'lecciones', leccionId));
+  const ref = doc(db, 'lecciones', leccionId);
+  const snap = await getDoc(ref);
+  if (snap.exists()) {
+    const data = snap.data();
+    await deleteDoc(ref);
+    if (data.moduloId) {
+      try {
+        await updateDoc(doc(db, 'modulos', data.moduloId), {
+          totalLessons: firestoreIncrement(-1)
+        });
+      } catch (e) {
+        console.warn('No se pudo restar el conteo de lecciones del módulo', e);
+      }
+    }
+  }
 }
 
 // ENTREGAS (colección: 'entregas')

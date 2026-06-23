@@ -103,15 +103,9 @@ function CourseRow({ course, index, totalCourses, onMoveUp, onMoveDown, onEdit, 
   const [open,        setOpen]        = useState(false);
   const [lessons,     setLessons]     = useState([]);
   const [loadingLessons, setLoadingLessons] = useState(false);
-  const [lessonsCount, setLessonsCount] = useState(course.totalLessons ?? 0);
 
-  useEffect(() => {
-    if (typeof course.totalLessons !== 'number') {
-      getLessonsByCourse(course.id).then(res => setLessonsCount(res.length)).catch(() => {});
-    } else {
-      setLessonsCount(course.totalLessons);
-    }
-  }, [course.id, course.totalLessons]);
+  // El total de lecciones ahora siempre se mantiene actualizado en la base de datos (course.totalLessons)
+  const lessonsCount = course.totalLessons ?? 0;
 
   const LEVEL_BADGE = {
     basic:    'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',
@@ -125,7 +119,6 @@ function CourseRow({ course, index, totalCourses, onMoveUp, onMoveDown, onEdit, 
       try {
         const data = await getLessonsByCourse(course.id);
         setLessons(data);
-        setLessonsCount(data.length);
       } finally {
         setLoadingLessons(false);
       }
